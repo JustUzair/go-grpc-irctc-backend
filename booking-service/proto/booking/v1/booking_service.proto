@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package booking.v1;
+
+import "booking/v1/booking.proto";
+
+option go_package = "github.com/JustUzair/irctc-microservice/gen/go/booking/v1;bookingv1";
+
+service BookingService {
+  rpc GetBooking(GetBookingRequest) returns (GetBookingResponse);
+}
+
+message GetBookingRequest {}
+
+message GetBookingResponse {
+  Booking booking = 1;
+}

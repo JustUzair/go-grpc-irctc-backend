@@ -8,10 +8,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const userServicePortKey = "USER_SERVICE_PORT"
+const (
+	userServicePortKey    = "USER_SERVICE_PORT"
+	bookingServicePortKey = "BOOKING_SERVICE_PORT"
+	paymentServicePortKey = "PAYMENT_SERVICE_PORT"
+	searchServicePortKey  = "SEARCH_SERVICE_PORT"
+)
 
 type Config struct {
-	UserServicePort string
+	UserServicePort    string
+	BookingServicePort string
+	PaymentServicePort string
+	SearchServicePort  string
 }
 
 func Load() (Config, error) {
@@ -19,7 +27,12 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
-	return Config{UserServicePort: os.Getenv(userServicePortKey)}, nil
+	return Config{
+		UserServicePort:    os.Getenv(userServicePortKey),
+		BookingServicePort: os.Getenv(bookingServicePortKey),
+		PaymentServicePort: os.Getenv(paymentServicePortKey),
+		SearchServicePort:  os.Getenv(searchServicePortKey),
+	}, nil
 }
 
 func loadOptionalDotEnvFiles(paths ...string) error {

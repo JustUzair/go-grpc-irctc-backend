@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package search.v1;
+
+import "search/v1/train.proto";
+
+option go_package = "github.com/JustUzair/irctc-microservice/gen/go/search/v1;searchv1";
+
+service SearchService {
+  rpc GetTrain(GetTrainRequest) returns (GetTrainResponse);
+}
+
+message GetTrainRequest {}
+
+message GetTrainResponse {
+  Train train = 1;
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package payment.v1;
+
+option go_package = "github.com/JustUzair/irctc-microservice/gen/go/payment/v1;paymentv1";
+
+message Payment {
+  string id = 1;
+}
