@@ -1,7 +1,10 @@
 {
   "scripts": {
-    "start-services": "npm run start-user-service",
-    "start-user-service": "go run ./user-service/server"
+    "start-services": "npm run start-user-service & npm run start-booking-service & npm run start-payment-service & npm run start-search-service & wait",
+    "start-user-service": "go run ./user-service/server",
+    "start-booking-service": "go run ./booking-service/server",
+    "start-payment-service": "go run ./payment-service/server",
+    "start-search-service": "go run ./search-service/server"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",

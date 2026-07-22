@@ -33,7 +33,7 @@ func main() {
 	paymentv1.RegisterPaymentServiceServer(grpcServer, paymentService)
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 
-	log.Printf("gRPC server serving on :%s", config.PaymentServicePort)
+	log.Printf("payment service started on port %s", config.PaymentServicePort)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Error occurred on gRPC server startup: %v", err)
 	}

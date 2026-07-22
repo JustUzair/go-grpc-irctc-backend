@@ -33,7 +33,7 @@ func main() {
 	bookingv1.RegisterBookingServiceServer(grpcServer, bookingService)
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 
-	log.Printf("gRPC server serving on :%s", config.BookingServicePort)
+	log.Printf("booking service started on port %s", config.BookingServicePort)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Error occurred on gRPC server startup: %v", err)
 	}
