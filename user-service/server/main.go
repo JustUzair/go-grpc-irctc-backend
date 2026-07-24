@@ -6,7 +6,8 @@ import (
 
 	"github.com/JustUzair/irctc-microservice/env"
 	userv1 "github.com/JustUzair/irctc-microservice/gen/go/user/v1"
-	"github.com/JustUzair/irctc-microservice/user-service/server/services"
+	service "github.com/JustUzair/irctc-microservice/user-service/server/internal"
+	logger "github.com/JustUzair/irctc-microservice/utils/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -22,8 +23,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	grpcServer := grpc.NewServer()
-	userService := &services.UserService{}
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logger.UnaryServerLoggerInterceptor))
+	userService := &service.UserService{}
 
 	healthServer := health.NewServer()
 

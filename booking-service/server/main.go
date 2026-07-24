@@ -4,9 +4,10 @@ import (
 	"log"
 	"net"
 
-	"github.com/JustUzair/irctc-microservice/booking-service/server/services"
+	service "github.com/JustUzair/irctc-microservice/booking-service/server/internal"
 	"github.com/JustUzair/irctc-microservice/env"
 	bookingv1 "github.com/JustUzair/irctc-microservice/gen/go/booking/v1"
+	logger "github.com/JustUzair/irctc-microservice/utils/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -23,8 +24,8 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
-	bookingService := &services.BookingService{}
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logger.UnaryServerLoggerInterceptor))
+	bookingService := &service.BookingService{}
 	healthServer := health.NewServer()
 
 	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
