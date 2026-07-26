@@ -10,14 +10,23 @@ services:
       POSTGRES_PASSWORD: irctcadmin
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5400:5432"
     volumes:
-      - postgres_data:/var/lib/postgres/data
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres/init-service-databases.sql:/docker-entrypoint-initdb.d/01-create-service-databases.sql:ro
+      - ./tests/postgres/init-test-database.sql:/docker-entrypoint-initdb.d/02-create-test-database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:9.8
     container_name: pgadmin
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin

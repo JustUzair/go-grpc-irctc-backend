@@ -13,7 +13,11 @@ type PostgresGorm struct {
 	MaxIdleConns int
 }
 
-func NewGormClient(ctx context.Context, dbURL string, config PostgresGorm) (*gorm.DB, error) {
+func NewGormClient(ctx context.Context, dbURL string, config *PostgresGorm) (*gorm.DB, error) {
+	if config == nil {
+		config = &PostgresGorm{}
+	}
+
 	db, err := gorm.Open(
 		postgres.Open(dbURL),
 		&gorm.Config{
@@ -42,5 +46,4 @@ func NewGormClient(ctx context.Context, dbURL string, config PostgresGorm) (*gor
 	}
 
 	return db, nil
-
 }

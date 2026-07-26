@@ -7,10 +7,11 @@ import (
 	redis "github.com/redis/go-redis/v9"
 )
 
-func NewRedisClient(ctx context.Context, addr string) (*redis.Client, error) {
+func NewRedisClient(ctx context.Context, addr string, password string) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:       addr,
 		MaxRetries: 3,
+		Password:   password,
 	})
 
 	if err := client.Ping(ctx).Err(); err != nil {
