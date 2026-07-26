@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/JustUzair/irctc-microservice/env"
 	userv1 "github.com/JustUzair/irctc-microservice/gen/go/user/v1"
+	env "github.com/JustUzair/irctc-microservice/utils/env"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

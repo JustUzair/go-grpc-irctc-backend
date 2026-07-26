@@ -4,9 +4,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/JustUzair/irctc-microservice/env"
 	searchv1 "github.com/JustUzair/irctc-microservice/gen/go/search/v1"
 	service "github.com/JustUzair/irctc-microservice/search-service/server/internal"
+	env "github.com/JustUzair/irctc-microservice/utils/env"
 	logger "github.com/JustUzair/irctc-microservice/utils/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

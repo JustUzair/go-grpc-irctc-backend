@@ -5,8 +5,9 @@ import (
 	"net"
 
 	service "github.com/JustUzair/irctc-microservice/booking-service/server/internal"
-	"github.com/JustUzair/irctc-microservice/env"
 	bookingv1 "github.com/JustUzair/irctc-microservice/gen/go/booking/v1"
+
+	env "github.com/JustUzair/irctc-microservice/utils/env"
 	logger "github.com/JustUzair/irctc-microservice/utils/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"

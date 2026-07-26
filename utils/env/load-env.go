@@ -13,6 +13,10 @@ const (
 	bookingServicePortKey = "BOOKING_SERVICE_PORT"
 	paymentServicePortKey = "PAYMENT_SERVICE_PORT"
 	searchServicePortKey  = "SEARCH_SERVICE_PORT"
+	redisServerPortKey    = "REDIS_PORT"
+	resendAPIKey          = "RESEND_API_KEY"
+	emailFromName         = "EMAIL_FROM_NAME"
+	emailFromAddress      = "EMAIL_FROM_ADDRESS"
 )
 
 type Config struct {
@@ -20,6 +24,10 @@ type Config struct {
 	BookingServicePort string
 	PaymentServicePort string
 	SearchServicePort  string
+	RedisServerPort    string
+	ResendAPIKey       string
+	EmailFromName      string
+	EmailFromAddress   string
 }
 
 func Load() (Config, error) {
@@ -32,6 +40,10 @@ func Load() (Config, error) {
 		BookingServicePort: os.Getenv(bookingServicePortKey),
 		PaymentServicePort: os.Getenv(paymentServicePortKey),
 		SearchServicePort:  os.Getenv(searchServicePortKey),
+		RedisServerPort:    os.Getenv(redisServerPortKey),
+		ResendAPIKey:       os.Getenv(resendAPIKey),
+		EmailFromName:      os.Getenv(emailFromName),
+		EmailFromAddress:   os.Getenv(emailFromAddress),
 	}, nil
 }
 
