@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>Verify your email address</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f7fb; color: #172033; font-family: Arial, Helvetica, sans-serif;">
+    <div style="display: none; max-height: 0; overflow: hidden; opacity: 0; color: transparent;">
+      Use the verification code in this email to finish creating your IRCTC Go account.
+    </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; background-color: #f4f7fb;">
+      <tr>
+        <td align="center" style="padding: 32px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; max-width: 600px; background-color: #ffffff; border: 1px solid #dde4ee; border-radius: 12px;">
+            <tr>
+              <td style="padding: 32px;">
+                <p style="margin: 0 0 24px; color: #1856a8; font-size: 20px; font-weight: 700;">
+                  IRCTC Go
+                </p>
+
+                <h1 style="margin: 0 0 16px; color: #172033; font-size: 28px; line-height: 36px;">
+                  Verify your email address
+                </h1>
+
+                <p style="margin: 0 0 16px; color: #445069; font-size: 16px; line-height: 24px;">
+                  {{if .Name}}Hi {{.Name}},{{else}}Hello,{{end}}
+                </p>
+
+                <p style="margin: 0 0 24px; color: #445069; font-size: 16px; line-height: 24px;">
+                  Enter the following one-time verification code to finish creating your account:
+                </p>
+
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td align="center" style="padding: 20px; background-color: #eef5ff; border: 1px solid #c9ddf8; border-radius: 8px;">
+                      <span style="display: inline-block; color: #123f79; font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 700; letter-spacing: 8px; line-height: 42px;">
+                        {{.OTP}}
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin: 24px 0 0; color: #445069; font-size: 16px; line-height: 24px;">
+                  This code expires in <strong>{{.ExpiresInMinutes}} minutes</strong>. For your security, do not share it with anyone.
+                </p>
+
+                <p style="margin: 24px 0 0; color: #69758c; font-size: 14px; line-height: 22px;">
+                  If you did not create an IRCTC Go account, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e7ebf1; border-radius: 0 0 12px 12px;">
+                <p style="margin: 0; color: #7b8598; font-size: 12px; line-height: 18px;">
+                  This is an automated transactional email. Please do not reply.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
