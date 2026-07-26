@@ -4,7 +4,8 @@
     "start-user-service": "go run ./user-service/server",
     "start-booking-service": "go run ./booking-service/server",
     "start-payment-service": "go run ./payment-service/server",
-    "start-search-service": "go run ./search-service/server"
+    "start-search-service": "go run ./search-service/server",
+    "tests:integration": "go test -tags=integration ./tests -v -count=1"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",
