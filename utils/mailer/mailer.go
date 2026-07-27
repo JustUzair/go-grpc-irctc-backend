@@ -6,14 +6,18 @@ import (
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
-	"log"
 	"strings"
 
 	"github.com/JustUzair/irctc-microservice/utils"
-	"github.com/JustUzair/irctc-microservice/utils/env"
 	custom_errors "github.com/JustUzair/irctc-microservice/utils/errors"
 	"github.com/resend/resend-go/v3"
 )
+
+type ResendConfig struct {
+	APIKey      string
+	FromName    string
+	FromAddress string
+}
 
 //go:embed templates/*.html.tmpl
 var emailTemplateFiles embed.FS
@@ -61,14 +65,9 @@ type RenderedEmail struct {
 	HTML    string
 }
 
-func NewResend() (*ResendMailer, error) {
-	// Validate configuration first.
-	config, err := env.Load()
-	if err != nil {
-		log.Printf("Failed to load configuration: %v", err)
-		return nil, custom_errors.ERR_INVALID_CONFIG
-	}
-	if !utils.IsEmailValid(config.EmailFromAddress) || len(config.EmailFromName) == 0 || len(config.ResendAPIKey) == 0 {
+func NewResend(config ResendConfig) (*ResendMailer, error) {
+
+	if !utils.IsEmailValid(config.FromAddress) || len(config.FromName) == 0 || len(config.APIKey) == 0 {
 		return nil, custom_errors.ERR_INVALID_CONFIG
 	}
 
@@ -78,9 +77,9 @@ func NewResend() (*ResendMailer, error) {
 	}
 
 	return &ResendMailer{
-		client:      resend.NewClient(config.ResendAPIKey),
-		fromName:    config.EmailFromName,
-		fromAddress: config.EmailFromAddress,
+		client:      resend.NewClient(config.APIKey),
+		fromName:    config.FromName,
+		fromAddress: config.FromAddress,
 		renderer:    renderer,
 	}, nil
 }

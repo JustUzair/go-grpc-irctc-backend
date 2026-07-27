@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -23,22 +24,30 @@ const (
 	resendAPIKey          = "RESEND_API_KEY"
 	emailFromName         = "EMAIL_FROM_NAME"
 	emailFromAddress      = "EMAIL_FROM_ADDRESS"
+	otpTTL                = "OTP_TTL"
+	otpRateMaxPerHour     = "OTP_RATE_MAX_PER_HOUR"
+	otpMaxVerifyAttempts  = "OTP_MAX_VERIFY_ATTEMPTS"
+	otpHmacSecret         = "OTP_HMAC_SECRET"
 )
 
 type Config struct {
-	UserServicePort    string
-	BookingServicePort string
-	PaymentServicePort string
-	SearchServicePort  string
-	RedisAddress       string
-	RedisPassword      string
-	UserDatabaseURL    string
-	BookingDatabaseURL string
-	PaymentDatabaseURL string
-	TestDatabaseURL    string
-	ResendAPIKey       string
-	EmailFromName      string
-	EmailFromAddress   string
+	UserServicePort      string
+	BookingServicePort   string
+	PaymentServicePort   string
+	SearchServicePort    string
+	RedisAddress         string
+	RedisPassword        string
+	UserDatabaseURL      string
+	BookingDatabaseURL   string
+	PaymentDatabaseURL   string
+	TestDatabaseURL      string
+	ResendAPIKey         string
+	EmailFromName        string
+	EmailFromAddress     string
+	OTPTTL               int
+	OtpRateMaxPerHour    int
+	OtpMaxVerifyAttempts int
+	OtpHmacSecret        string
 }
 
 func Load() (Config, error) {
@@ -47,19 +56,23 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		UserServicePort:    os.Getenv(userServicePortKey),
-		BookingServicePort: os.Getenv(bookingServicePortKey),
-		PaymentServicePort: os.Getenv(paymentServicePortKey),
-		SearchServicePort:  os.Getenv(searchServicePortKey),
-		RedisAddress:       os.Getenv(redisAddressKey),
-		RedisPassword:      os.Getenv(redisPasswordKey),
-		UserDatabaseURL:    os.Getenv(userDatabaseURLKey),
-		BookingDatabaseURL: os.Getenv(bookingDatabaseURLKey),
-		PaymentDatabaseURL: os.Getenv(paymentDatabaseURLKey),
-		TestDatabaseURL:    os.Getenv(testDatabaseURLKey),
-		ResendAPIKey:       os.Getenv(resendAPIKey),
-		EmailFromName:      os.Getenv(emailFromName),
-		EmailFromAddress:   os.Getenv(emailFromAddress),
+		UserServicePort:      os.Getenv(userServicePortKey),
+		BookingServicePort:   os.Getenv(bookingServicePortKey),
+		PaymentServicePort:   os.Getenv(paymentServicePortKey),
+		SearchServicePort:    os.Getenv(searchServicePortKey),
+		RedisAddress:         os.Getenv(redisAddressKey),
+		RedisPassword:        os.Getenv(redisPasswordKey),
+		UserDatabaseURL:      os.Getenv(userDatabaseURLKey),
+		BookingDatabaseURL:   os.Getenv(bookingDatabaseURLKey),
+		PaymentDatabaseURL:   os.Getenv(paymentDatabaseURLKey),
+		TestDatabaseURL:      os.Getenv(testDatabaseURLKey),
+		ResendAPIKey:         os.Getenv(resendAPIKey),
+		EmailFromName:        os.Getenv(emailFromName),
+		EmailFromAddress:     os.Getenv(emailFromAddress),
+		OTPTTL:               getEnvInt(otpTTL, 300),
+		OtpRateMaxPerHour:    getEnvInt(otpRateMaxPerHour, 5),
+		OtpMaxVerifyAttempts: getEnvInt(otpMaxVerifyAttempts, 5),
+		OtpHmacSecret:        os.Getenv(otpHmacSecret),
 	}, nil
 }
 
@@ -108,4 +121,18 @@ func loadOptionalDotEnvFiles(paths ...string) error {
 	}
 
 	return nil
+}
+
+func getEnvInt(key string, fallback int) int {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return fallback
+	}
+
+	val, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return fallback
+	}
+
+	return val
 }
