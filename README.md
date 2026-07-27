@@ -1,4 +1,33 @@
-# Logging setup
+# Go-IRCTC (WIP)
+
+Go-IRCTC rebuilds the backend domain of India's IRCTC railway booking
+experience with Go and native gRPC microservices. Each service exposes a
+versioned Protobuf API and owns the data for its part of the system. PostgreSQL
+provides service-owned databases, while Redis handles short-lived state such as
+OTP signup sessions and request limits.
+
+Core stack: Go 1.26, gRPC, Protobuf, Buf, PostgreSQL, GORM, Redis, Docker
+Compose, and Resend.
+
+## Services
+
+### User service
+
+Handles signup, user accounts, and authentication. The current implementation
+starts signup with a short-lived email verification code.
+
+Supported RPCs:
+
+- [`SendOTP`](user-service/README.md#sendotp) — implemented; starts signup and
+  sends the email verification code.
+
+[Read the user service feature summary](user-service/README.md#features)
+
+The booking, payment, and search services are set up but do not have completed
+business features yet. Their RPC links and summaries will be added as those
+features are built and tested.
+
+## Logging setup
 
 Copy the example environment file before starting a service:
 
