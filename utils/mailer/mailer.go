@@ -49,7 +49,16 @@ type ResendMailer struct {
 	client      *resend.Client
 	fromName    string
 	fromAddress string
-	templates   *htmltemplate.Template
+	renderer    *TemplateRenderer
+}
+
+type TemplateRenderer struct {
+	templates *htmltemplate.Template
+}
+
+type RenderedEmail struct {
+	Subject string
+	HTML    string
 }
 
 func NewResend() (*ResendMailer, error) {
@@ -63,6 +72,20 @@ func NewResend() (*ResendMailer, error) {
 		return nil, custom_errors.ERR_INVALID_CONFIG
 	}
 
+	renderer, err := NewTemplateRenderer()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ResendMailer{
+		client:      resend.NewClient(config.ResendAPIKey),
+		fromName:    config.EmailFromName,
+		fromAddress: config.EmailFromAddress,
+		renderer:    renderer,
+	}, nil
+}
+
+func NewTemplateRenderer() (*TemplateRenderer, error) {
 	parsedTemplates, err := htmltemplate.New("emails").
 		Option("missingkey=error").
 		ParseFS(emailTemplateFiles, "templates/*.html.tmpl")
@@ -70,12 +93,7 @@ func NewResend() (*ResendMailer, error) {
 		return nil, fmt.Errorf("parse email templates: %w", err)
 	}
 
-	return &ResendMailer{
-		client:      resend.NewClient(config.ResendAPIKey),
-		fromName:    config.EmailFromName,
-		fromAddress: config.EmailFromAddress,
-		templates:   parsedTemplates,
-	}, nil
+	return &TemplateRenderer{templates: parsedTemplates}, nil
 }
 
 func (m *ResendMailer) SendEmail(ctx context.Context, emailTemplate EmailTemplate, params EmailParams) (string, error) {
@@ -83,40 +101,7 @@ func (m *ResendMailer) SendEmail(ctx context.Context, emailTemplate EmailTemplat
 		return "", fmt.Errorf("invalid recipient email address")
 	}
 
-	var (
-		subject      string
-		templateName string
-		templateData any
-	)
-
-	switch emailTemplate {
-	case SendOTP:
-		data, ok := params.TemplateData.(SendOTPTemplateData)
-		if !ok {
-			return "", fmt.Errorf("invalid data for send OTP template")
-		}
-		if strings.TrimSpace(data.OTP) == "" || data.ExpiresInMinutes <= 0 {
-			return "", fmt.Errorf("OTP and expiration are required")
-		}
-
-		subject = sendOTPSubject
-		templateName = sendOTPTemplateName
-		templateData = data
-
-	case VerifyOTP:
-		data, ok := params.TemplateData.(VerifyOTPTemplateData)
-		if !ok {
-			return "", fmt.Errorf("invalid data for verify OTP template")
-		}
-
-		subject = verifyOTPSubject
-		templateName = verifyOTPTemplateName
-		templateData = data
-	default:
-		return "", custom_errors.ERR_INVALID_TEMPLATE
-	}
-
-	htmlBody, err := m.renderTemplate(templateName, templateData)
+	rendered, err := m.renderer.Render(emailTemplate, params.TemplateData)
 	if err != nil {
 		return "", err
 	}
@@ -124,8 +109,8 @@ func (m *ResendMailer) SendEmail(ctx context.Context, emailTemplate EmailTemplat
 	request := &resend.SendEmailRequest{
 		From:    fmt.Sprintf("%s <%s>", m.fromName, m.fromAddress),
 		To:      []string{params.ToEmailAddress},
-		Subject: subject,
-		Html:    htmlBody,
+		Subject: rendered.Subject,
+		Html:    rendered.HTML,
 	}
 
 	sent, err := m.client.Emails.SendWithContext(ctx, request)
@@ -136,10 +121,52 @@ func (m *ResendMailer) SendEmail(ctx context.Context, emailTemplate EmailTemplat
 	return sent.Id, nil
 }
 
-func (m *ResendMailer) renderTemplate(templateName string, data any) (string, error) {
+func (r *TemplateRenderer) Render(emailTemplate EmailTemplate, templateData any) (RenderedEmail, error) {
+	var (
+		subject      string
+		templateName string
+		data         any
+	)
+
+	switch emailTemplate {
+	case SendOTP:
+		sendOTPData, ok := templateData.(SendOTPTemplateData)
+		if !ok {
+			return RenderedEmail{}, fmt.Errorf("invalid data for send OTP template")
+		}
+		if strings.TrimSpace(sendOTPData.OTP) == "" || sendOTPData.ExpiresInMinutes <= 0 {
+			return RenderedEmail{}, fmt.Errorf("OTP and expiration are required")
+		}
+
+		subject = sendOTPSubject
+		templateName = sendOTPTemplateName
+		data = sendOTPData
+
+	case VerifyOTP:
+		verifyOTPData, ok := templateData.(VerifyOTPTemplateData)
+		if !ok {
+			return RenderedEmail{}, fmt.Errorf("invalid data for verify OTP template")
+		}
+
+		subject = verifyOTPSubject
+		templateName = verifyOTPTemplateName
+		data = verifyOTPData
+	default:
+		return RenderedEmail{}, custom_errors.ERR_INVALID_TEMPLATE
+	}
+
+	htmlBody, err := r.renderTemplate(templateName, data)
+	if err != nil {
+		return RenderedEmail{}, err
+	}
+
+	return RenderedEmail{Subject: subject, HTML: htmlBody}, nil
+}
+
+func (r *TemplateRenderer) renderTemplate(templateName string, data any) (string, error) {
 	var body bytes.Buffer
 
-	if err := m.templates.ExecuteTemplate(&body, templateName, data); err != nil {
+	if err := r.templates.ExecuteTemplate(&body, templateName, data); err != nil {
 		return "", fmt.Errorf("render email template %q: %w", templateName, err)
 	}
 

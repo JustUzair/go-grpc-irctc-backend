@@ -5,7 +5,9 @@
     "start-booking-service": "go run ./booking-service/server",
     "start-payment-service": "go run ./payment-service/server",
     "start-search-service": "go run ./search-service/server",
-    "tests:integration": "go test -tags=integration ./tests -v -count=1"
+    "tests:integration": "go test -tags=integration ./tests -v -count=1",
+    "tests:email": "go test -tags='integration mailtrap' ./tests -run '^TestMailtrapEmailIntegration$' -v -count=1",
+    "tests:resend": "go test -tags='integration resend' ./tests -run '^TestResendEmailIntegration$' -v -count=1"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.12.1",
