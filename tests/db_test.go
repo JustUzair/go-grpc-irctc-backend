@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JustUzair/irctc-microservice/utils"
-	"github.com/JustUzair/irctc-microservice/utils/env"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 )
 
 type User struct {

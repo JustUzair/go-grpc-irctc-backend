@@ -11,8 +11,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/JustUzair/irctc-microservice/utils/env"
-	custom_errors "github.com/JustUzair/irctc-microservice/utils/errors"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"

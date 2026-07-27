@@ -8,8 +8,8 @@ import (
 	htmltemplate "html/template"
 	"strings"
 
-	"github.com/JustUzair/irctc-microservice/utils"
-	custom_errors "github.com/JustUzair/irctc-microservice/utils/errors"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils"
+	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/resend/resend-go/v3"
 )
 

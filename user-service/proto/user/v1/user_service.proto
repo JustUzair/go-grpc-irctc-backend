@@ -4,7 +4,7 @@ package user.v1;
 
 import "user/v1/user.proto";
 
-option go_package = "github.com/JustUzair/irctc-microservice/gen/go/user/v1;userv1";
+option go_package = "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1;userv1";
 
 service UserService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);

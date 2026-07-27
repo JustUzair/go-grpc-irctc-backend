@@ -1,7 +1,7 @@
 syntax = "proto3";
 package user.v1;
 
-option go_package = "github.com/JustUzair/irctc-microservice/gen/go/user/v1;userv1";
+option go_package = "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1;userv1";
 
 message User {
   string name = 1;

@@ -72,7 +72,7 @@ const file_payment_v1_payment_proto_rawDesc = "" +
 	"\x18payment/v1/payment.proto\x12\n" +
 	"payment.v1\"\x19\n" +
 	"\aPayment\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02idBEZCgithub.com/JustUzair/irctc-microservice/gen/go/payment/v1;paymentv1b\x06proto3"
+	"\x02id\x18\x01 \x01(\tR\x02idBHZFgithub.com/JustUzair/go-grpc-irctc-backend/gen/go/payment/v1;paymentv1b\x06proto3"
 
 var (
 	file_payment_v1_payment_proto_rawDescOnce sync.Once

@@ -112,7 +112,7 @@ const file_booking_v1_booking_service_proto_rawDesc = "" +
 	"\abooking\x18\x01 \x01(\v2\x13.booking.v1.BookingR\abooking2]\n" +
 	"\x0eBookingService\x12K\n" +
 	"\n" +
-	"GetBooking\x12\x1d.booking.v1.GetBookingRequest\x1a\x1e.booking.v1.GetBookingResponseBEZCgithub.com/JustUzair/irctc-microservice/gen/go/booking/v1;bookingv1b\x06proto3"
+	"GetBooking\x12\x1d.booking.v1.GetBookingRequest\x1a\x1e.booking.v1.GetBookingResponseBHZFgithub.com/JustUzair/go-grpc-irctc-backend/gen/go/booking/v1;bookingv1b\x06proto3"
 
 var (
 	file_booking_v1_booking_service_proto_rawDescOnce sync.Once

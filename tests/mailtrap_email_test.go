@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JustUzair/irctc-microservice/utils/env"
-	"github.com/JustUzair/irctc-microservice/utils/mailer"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
 )
 
 const mailtrapSandboxEndpoint = "https://sandbox.api.mailtrap.io/api/send/%d"

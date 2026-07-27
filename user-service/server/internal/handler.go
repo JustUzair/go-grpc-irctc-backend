@@ -7,9 +7,9 @@ import (
 	"log"
 	"time"
 
-	models "github.com/JustUzair/irctc-microservice/user-service/server/models"
-	"github.com/JustUzair/irctc-microservice/utils/env"
-	"github.com/JustUzair/irctc-microservice/utils/mailer"
+	models "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

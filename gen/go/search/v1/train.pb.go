@@ -71,7 +71,7 @@ const file_search_v1_train_proto_rawDesc = "" +
 	"\n" +
 	"\x15search/v1/train.proto\x12\tsearch.v1\"\x1b\n" +
 	"\x05Train\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04nameBCZAgithub.com/JustUzair/irctc-microservice/gen/go/search/v1;searchv1b\x06proto3"
+	"\x04name\x18\x01 \x01(\tR\x04nameBFZDgithub.com/JustUzair/go-grpc-irctc-backend/gen/go/search/v1;searchv1b\x06proto3"
 
 var (
 	file_search_v1_train_proto_rawDescOnce sync.Once

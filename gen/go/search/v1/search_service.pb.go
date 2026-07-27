@@ -110,7 +110,7 @@ const file_search_v1_search_service_proto_rawDesc = "" +
 	"\x10GetTrainResponse\x12&\n" +
 	"\x05train\x18\x01 \x01(\v2\x10.search.v1.TrainR\x05train2T\n" +
 	"\rSearchService\x12C\n" +
-	"\bGetTrain\x12\x1a.search.v1.GetTrainRequest\x1a\x1b.search.v1.GetTrainResponseBCZAgithub.com/JustUzair/irctc-microservice/gen/go/search/v1;searchv1b\x06proto3"
+	"\bGetTrain\x12\x1a.search.v1.GetTrainRequest\x1a\x1b.search.v1.GetTrainResponseBFZDgithub.com/JustUzair/go-grpc-irctc-backend/gen/go/search/v1;searchv1b\x06proto3"
 
 var (
 	file_search_v1_search_service_proto_rawDescOnce sync.Once

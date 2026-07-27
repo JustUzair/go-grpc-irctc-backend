@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	bookingv1 "github.com/JustUzair/irctc-microservice/gen/go/booking/v1"
+	bookingv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/booking/v1"
 )
 
 type BookingService struct {

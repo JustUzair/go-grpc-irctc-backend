@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	paymentv1 "github.com/JustUzair/irctc-microservice/gen/go/payment/v1"
+	paymentv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/payment/v1"
 )
 
 type PaymentService struct {

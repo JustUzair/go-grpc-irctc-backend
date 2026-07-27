@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package booking.v1;
 
-option go_package = "github.com/JustUzair/irctc-microservice/gen/go/booking/v1;bookingv1";
+option go_package = "github.com/JustUzair/go-grpc-irctc-backend/gen/go/booking/v1;bookingv1";
 
 message Booking {
   string id = 1;

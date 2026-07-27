@@ -1,4 +1,4 @@
-module github.com/JustUzair/irctc-microservice
+module github.com/JustUzair/go-grpc-irctc-backend
 
 go 1.26.5
 

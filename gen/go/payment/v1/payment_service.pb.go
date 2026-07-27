@@ -112,7 +112,7 @@ const file_payment_v1_payment_service_proto_rawDesc = "" +
 	"\apayment\x18\x01 \x01(\v2\x13.payment.v1.PaymentR\apayment2]\n" +
 	"\x0ePaymentService\x12K\n" +
 	"\n" +
-	"GetPayment\x12\x1d.payment.v1.GetPaymentRequest\x1a\x1e.payment.v1.GetPaymentResponseBEZCgithub.com/JustUzair/irctc-microservice/gen/go/payment/v1;paymentv1b\x06proto3"
+	"GetPayment\x12\x1d.payment.v1.GetPaymentRequest\x1a\x1e.payment.v1.GetPaymentResponseBHZFgithub.com/JustUzair/go-grpc-irctc-backend/gen/go/payment/v1;paymentv1b\x06proto3"
 
 var (
 	file_payment_v1_payment_service_proto_rawDescOnce sync.Once

@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	custom_errors "github.com/JustUzair/irctc-microservice/utils/errors"
+	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )

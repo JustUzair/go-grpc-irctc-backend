@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	userv1 "github.com/JustUzair/irctc-microservice/gen/go/user/v1"
-	"github.com/JustUzair/irctc-microservice/utils/env"
-	custom_errors "github.com/JustUzair/irctc-microservice/utils/errors"
+	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )

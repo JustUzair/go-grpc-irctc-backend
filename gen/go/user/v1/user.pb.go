@@ -71,7 +71,7 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"\x12user/v1/user.proto\x12\auser.v1\"\x1a\n" +
 	"\x04User\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04nameB?Z=github.com/JustUzair/irctc-microservice/gen/go/user/v1;userv1b\x06proto3"
+	"\x04name\x18\x01 \x01(\tR\x04nameBBZ@github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1;userv1b\x06proto3"
 
 var (
 	file_user_v1_user_proto_rawDescOnce sync.Once

@@ -4,7 +4,7 @@ package search.v1;
 
 import "search/v1/train.proto";
 
-option go_package = "github.com/JustUzair/irctc-microservice/gen/go/search/v1;searchv1";
+option go_package = "github.com/JustUzair/go-grpc-irctc-backend/gen/go/search/v1;searchv1";
 
 service SearchService {
   rpc GetTrain(GetTrainRequest) returns (GetTrainResponse);

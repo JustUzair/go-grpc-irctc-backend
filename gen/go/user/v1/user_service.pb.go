@@ -259,7 +259,7 @@ const file_user_v1_user_service_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user2\x89\x01\n" +
 	"\vUserService\x12<\n" +
 	"\aGetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\x12<\n" +
-	"\aSendOTP\x12\x17.user.v1.SendOTPRequest\x1a\x18.user.v1.SendOTPResponseB?Z=github.com/JustUzair/irctc-microservice/gen/go/user/v1;userv1b\x06proto3"
+	"\aSendOTP\x12\x17.user.v1.SendOTPRequest\x1a\x18.user.v1.SendOTPResponseBBZ@github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1;userv1b\x06proto3"
 
 var (
 	file_user_v1_user_service_proto_rawDescOnce sync.Once

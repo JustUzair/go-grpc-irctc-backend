@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	userv1 "github.com/JustUzair/irctc-microservice/gen/go/user/v1"
-	env "github.com/JustUzair/irctc-microservice/utils/env"
+	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
+	env "github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

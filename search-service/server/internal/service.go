@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	searchv1 "github.com/JustUzair/irctc-microservice/gen/go/search/v1"
+	searchv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/search/v1"
 )
 
 type SearchService struct {

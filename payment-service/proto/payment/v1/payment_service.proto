@@ -4,7 +4,7 @@ package payment.v1;
 
 import "payment/v1/payment.proto";
 
-option go_package = "github.com/JustUzair/irctc-microservice/gen/go/payment/v1;paymentv1";
+option go_package = "github.com/JustUzair/go-grpc-irctc-backend/gen/go/payment/v1;paymentv1";
 
 service PaymentService {
   rpc GetPayment(GetPaymentRequest) returns (GetPaymentResponse);

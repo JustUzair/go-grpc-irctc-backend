@@ -4,11 +4,11 @@ import (
 	"log"
 	"net"
 
-	service "github.com/JustUzair/irctc-microservice/booking-service/server/internal"
-	bookingv1 "github.com/JustUzair/irctc-microservice/gen/go/booking/v1"
+	service "github.com/JustUzair/go-grpc-irctc-backend/booking-service/server/internal"
+	bookingv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/booking/v1"
 
-	env "github.com/JustUzair/irctc-microservice/utils/env"
-	logger "github.com/JustUzair/irctc-microservice/utils/interceptors"
+	env "github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	logger "github.com/JustUzair/go-grpc-irctc-backend/utils/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
