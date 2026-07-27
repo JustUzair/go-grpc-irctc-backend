@@ -22,7 +22,7 @@ services:
       retries: 10
 
   pgadmin:
-    image: dpage/pgadmin4:9.8
+    image: dpage/pgadmin4:9.16
     container_name: pgadmin
     depends_on:
       postgres:
@@ -30,8 +30,11 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_ENABLE_PSQL: "True"
     ports:
       - "8081:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
   redis:
     image: redis/redis-stack:7.4.0-v8
@@ -47,4 +50,5 @@ services:
 
 volumes:
   postgres_data:
+  pgadmin_data:
   redis_data:
