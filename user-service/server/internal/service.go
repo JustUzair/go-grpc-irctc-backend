@@ -92,6 +92,7 @@ func (this *UserService) VerifyOTP(ctx context.Context, req *userv1.VerifyOTPReq
 			Email:         new_user.Email,
 			EmailVerified: true,
 		},
+		Success:       true,
 		StatusMessage: "User account created successfully!",
 	}, nil
 }
