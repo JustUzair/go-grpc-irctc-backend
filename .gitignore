@@ -37,3 +37,6 @@ features.md
 guide.md
 user-service/guide.md
 Todo.md
+
+# Ignore generated protobuf files
+gen/
