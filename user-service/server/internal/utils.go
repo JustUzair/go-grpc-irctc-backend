@@ -39,24 +39,24 @@ func CheckPasswordHash(password, hash string) bool {
 func RemoveStoredOTP(
 	ctx context.Context,
 	redis *redis.Client,
-	otpSessionID string,
+	otp_session_id string,
 
 ) error {
-	key := fmt.Sprintf("otp:session:%s", otpSessionID)
+	key := fmt.Sprintf("otp:session:%s", otp_session_id)
 	return redis.Del(ctx, key).Err()
 }
 
 func GenerateAndStoreOTP(ctx context.Context, redis *redis.Client, config env.Config, meta *Meta) (string, string, error) {
 
-	var rateKey string = fmt.Sprintf("otp:rate:%s", meta.Email)
+	var rate_key string = getOTPRateKey(meta.Email)
 
-	sentCount, err := redis.Get(ctx, rateKey).Int()
+	sent_count, err := redis.Get(ctx, rate_key).Int()
 
 	if err != nil {
-		sentCount = 0
+		sent_count = 0
 	}
 
-	if sentCount >= config.OtpRateMaxPerHour {
+	if sent_count >= config.OtpRateMaxPerHour {
 		return "", "", custom_errors.ERR_TOO_MANY_REQUESTS
 	}
 
@@ -65,28 +65,61 @@ func GenerateAndStoreOTP(ctx context.Context, redis *redis.Client, config env.Co
 		return "", "", err
 	}
 
-	otpSessionId := uuid.New()
+	otp_session_id := uuid.New()
 	hashed := hmacFor(config.OtpHmacSecret, meta.Email, string(otp))
 
-	sessionPayload := OTPSessionData{
+	session_payload := OTPSessionData{
 		HashedOTP: hashed,
 		Meta:      *meta, // or meta if meta is already a value struct
 	}
 
-	sessionJSON, err := json.Marshal(sessionPayload)
+	sessionJSON, err := json.Marshal(session_payload)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to marshal session data: %w", err)
 	}
 	ttl := time.Duration(config.OTPTTL) * time.Second
-	redisOtpSessionKey := fmt.Sprintf("otp:session:%s", otpSessionId.String())
-	err = redis.Set(ctx, redisOtpSessionKey, sessionJSON, ttl).Err()
+	redis_otp_session_key := getOTPSessionKey(otp_session_id.String())
+	err = redis.Set(ctx, redis_otp_session_key, sessionJSON, ttl).Err()
 
 	if err != nil {
 		return "", "", fmt.Errorf("failed to save otp session in redis: %w", err)
 	}
-	redis.Incr(ctx, rateKey)
-	redis.Expire(ctx, rateKey, time.Hour)
-	return otp, otpSessionId.String(), nil
+	redis.Incr(ctx, rate_key)
+	redis.Expire(ctx, rate_key, time.Hour)
+	return otp, otp_session_id.String(), nil
+}
+
+func VerifyAndConsumeOTP(ctx context.Context, redis *redis.Client, config env.Config, otp string, otp_session_id string) *Meta {
+	var session_payload *OTPSessionData
+	redis_otp_session_key := getOTPSessionKey(otp_session_id)
+
+	otp_session_data := redis.Get(ctx, redis_otp_session_key).Val()
+	json.Unmarshal([]byte(otp_session_data), &session_payload)
+	storedOtp := session_payload.HashedOTP
+	var meta Meta = session_payload.Meta
+	var attempts_key string = getOTPAttemptsKey(meta.Email)
+
+	attempt_count, err := redis.Get(ctx, attempts_key).Int()
+
+	if err != nil {
+		attempt_count = 0
+	}
+
+	if attempt_count >= config.OtpMaxVerifyAttempts {
+		return nil
+	}
+
+	hashedOtp := hmacFor(config.OtpHmacSecret, meta.Email, string(otp))
+	if hmac.Equal([]byte(storedOtp), []byte(hashedOtp)) {
+		redis.Del(ctx, redis_otp_session_key, attempts_key, getOTPRateKey(meta.Email))
+		return &meta
+	} else {
+
+		redis.Incr(ctx, attempts_key)
+		redis.Expire(ctx, attempts_key, time.Hour)
+		return nil
+	}
+
 }
 
 // creates 6 digit otp
@@ -116,4 +149,18 @@ func hmacFor(secretKey string, email string, otp string) string {
 
 	// 3. Return as hex string
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// Redis Session Keys
+
+func getOTPRateKey(email string) string {
+	return fmt.Sprintf("otp:rate:%s", email)
+}
+
+func getOTPAttemptsKey(email string) string {
+	return fmt.Sprintf("otp:atttempts:%s", email)
+}
+
+func getOTPSessionKey(session_id string) string {
+	return fmt.Sprintf("otp:session:%s", session_id)
 }

@@ -8,35 +8,29 @@ import (
 	"time"
 
 	models "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
-	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
-	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
-type Meta struct {
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	Email          string `json:"email"`
-	HashedPassword string `json:"hashed_password"`
-}
-
-type OTPSessionData struct {
-	HashedOTP string `json:"hashed_otp"`
-	Meta      Meta   `json:"meta"`
-}
-
-func handleSendOTP(ctx context.Context, config env.Config, redis *redis.Client, db *gorm.DB, firstname string, lastname string, email string, password string) (string, error) {
+func handleSendOTP(ctx context.Context, input SendOTPInput) (string, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	db := input.DB
+	redis := input.Redis
+	config := input.Config
+	firstname := input.Firstname
+	lastname := input.Lastname
+	email := input.Email
+	password := input.Password
 	// -------------------------------------------------------------
 	// Handler Logic
 	// -------------------------------------------------------------
 	var existingUser *models.User = nil
+
 	err := db.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) { // User doesnt exist, handle success flow
@@ -94,5 +88,57 @@ func handleSendOTP(ctx context.Context, config env.Config, redis *redis.Client, 
 		log.Printf("User already exists")
 		return "", status.Error(codes.AlreadyExists, "User already exists")
 	}
+
+}
+
+func handleVerifyOTP(ctx context.Context, input VerifyOTPInput) (*models.User, error) {
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	db := input.DB
+	redis := input.Redis
+	config := input.Config
+	otp := input.Otp
+	otp_session_id := input.OtpSessionId
+
+	// -------------------------------------------------------------
+	// Handler Logic
+	// -------------------------------------------------------------
+	meta := VerifyAndConsumeOTP(ctx, redis, config, otp, otp_session_id)
+	if meta == nil {
+		return nil, fmt.Errorf("incorrect or expired otp entered")
+	}
+
+	new_user := models.User{
+		FirstName:     meta.FirstName,
+		LastName:      meta.LastName,
+		Email:         meta.Email,
+		Password:      &meta.HashedPassword,
+		EmailVerified: true,
+	}
+
+	// var user userv1.User = userv1.User
+	result := db.Create(&new_user)
+	if result.RowsAffected != 1 || result.Error != nil {
+		return nil, fmt.Errorf("error creating user record in db")
+	}
+
+	mailingService, err := mailer.NewResend(mailer.ResendConfig{
+		APIKey:      config.ResendAPIKey,
+		FromName:    config.EmailFromName,
+		FromAddress: config.EmailFromAddress,
+	},
+	)
+	if err != nil {
+		return nil, err
+	}
+	_, err = mailingService.SendEmail(ctx, mailer.EmailTemplate(mailer.VerifyOTP), mailer.EmailParams{
+		ToEmailAddress: meta.Email,
+		TemplateData: mailer.VerifyOTPTemplateData{
+			Name: meta.FirstName + " " + meta.LastName,
+		},
+	})
+	return &new_user, nil
 
 }
