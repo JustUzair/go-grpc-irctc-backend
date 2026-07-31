@@ -9,6 +9,7 @@ option go_package = "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1;u
 service UserService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc SendOTP(SendOTPRequest) returns (SendOTPResponse);
+  rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse);
 }
 
 // ####### RPC SendOTP  #######
@@ -24,6 +25,16 @@ message SendOTPResponse {
   bool status = 1;
   string message = 2;
   string otp_session_id = 3;
+}
+
+// RPC Verify OTP
+message VerifyOTPRequest {
+  string otp = 1;
+  string otp_session_id = 2;
+}
+message VerifyOTPResponse {
+  User user = 1;
+  string status_message = 2;
 }
 
 // ####### RPC GetUser  #######
