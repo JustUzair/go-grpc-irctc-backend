@@ -90,11 +90,16 @@ func GenerateAndStoreOTP(ctx context.Context, redis *redis.Client, config env.Co
 }
 
 func VerifyAndConsumeOTP(ctx context.Context, redis *redis.Client, config env.Config, otp string, otp_session_id string) *Meta {
-	var session_payload *OTPSessionData
+	var session_payload OTPSessionData
 	redis_otp_session_key := getOTPSessionKey(otp_session_id)
 
-	otp_session_data := redis.Get(ctx, redis_otp_session_key).Val()
-	json.Unmarshal([]byte(otp_session_data), &session_payload)
+	otp_session_data, err := redis.Get(ctx, redis_otp_session_key).Result()
+	if err != nil || otp_session_data == "" {
+		return nil
+	}
+	if err := json.Unmarshal([]byte(otp_session_data), &session_payload); err != nil {
+		return nil
+	}
 	storedOtp := session_payload.HashedOTP
 	var meta Meta = session_payload.Meta
 	var attempts_key string = getOTPAttemptsKey(meta.Email)

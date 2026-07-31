@@ -55,13 +55,7 @@ func handleSendOTP(ctx context.Context, input SendOTPInput) (string, error) {
 			otpTTL := time.Duration(config.OTPTTL) * time.Second
 			expiresInMinutes := int((otpTTL + time.Minute - 1) / time.Minute)
 
-			mailingService, err := mailer.NewResend(mailer.ResendConfig{
-				APIKey:      config.ResendAPIKey,
-				FromName:    config.EmailFromName,
-				FromAddress: config.EmailFromAddress,
-			},
-			)
-
+			mailingService, err := mailer.New(config)
 			if err != nil {
 				return "", err
 			}
@@ -124,12 +118,7 @@ func handleVerifyOTP(ctx context.Context, input VerifyOTPInput) (*models.User, e
 		return nil, fmt.Errorf("error creating user record in db")
 	}
 
-	mailingService, err := mailer.NewResend(mailer.ResendConfig{
-		APIKey:      config.ResendAPIKey,
-		FromName:    config.EmailFromName,
-		FromAddress: config.EmailFromAddress,
-	},
-	)
+	mailingService, err := mailer.New(config)
 	if err != nil {
 		return nil, err
 	}

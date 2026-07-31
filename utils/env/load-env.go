@@ -21,7 +21,10 @@ const (
 	bookingDatabaseURLKey = "BOOKING_DATABASE_URL"
 	paymentDatabaseURLKey = "PAYMENT_DATABASE_URL"
 	testDatabaseURLKey    = "TEST_DATABASE_URL"
+	mailerProviderKey     = "MAILER_PROVIDER"
 	resendAPIKey          = "RESEND_API_KEY"
+	mailtrapAPITokenKey   = "MAILTRAP_API_TOKEN"
+	mailtrapInboxIDKey    = "MAILTRAP_INBOX_ID"
 	emailFromName         = "EMAIL_FROM_NAME"
 	emailFromAddress      = "EMAIL_FROM_ADDRESS"
 	otpTTL                = "OTP_TTL"
@@ -41,7 +44,10 @@ type Config struct {
 	BookingDatabaseURL   string
 	PaymentDatabaseURL   string
 	TestDatabaseURL      string
+	MailerProvider       string
 	ResendAPIKey         string
+	MailtrapAPIToken     string
+	MailtrapInboxID      string
 	EmailFromName        string
 	EmailFromAddress     string
 	OTPTTL               int
@@ -66,7 +72,10 @@ func Load() (Config, error) {
 		BookingDatabaseURL:   os.Getenv(bookingDatabaseURLKey),
 		PaymentDatabaseURL:   os.Getenv(paymentDatabaseURLKey),
 		TestDatabaseURL:      os.Getenv(testDatabaseURLKey),
+		MailerProvider:       os.Getenv(mailerProviderKey),
 		ResendAPIKey:         os.Getenv(resendAPIKey),
+		MailtrapAPIToken:     firstNonEmpty(os.Getenv(mailtrapAPITokenKey), os.Getenv("MAILTRAP_TOKEN")),
+		MailtrapInboxID:      os.Getenv(mailtrapInboxIDKey),
 		EmailFromName:        os.Getenv(emailFromName),
 		EmailFromAddress:     os.Getenv(emailFromAddress),
 		OTPTTL:               getEnvInt(otpTTL, 300),
@@ -135,4 +144,14 @@ func getEnvInt(key string, fallback int) int {
 	}
 
 	return val
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+
+	return ""
 }
