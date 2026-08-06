@@ -14,12 +14,19 @@ Compose, and Resend.
 ### User service
 
 Handles signup, user accounts, and authentication. The current implementation
-starts signup with a short-lived email verification code.
+supports email verification signup and password login with signed access and
+refresh tokens.
 
 Supported RPCs:
 
+- [`GetUser`](user-service/README.md#getuser) — contract present; lookup behavior
+  is not implemented yet.
 - [`SendOTP`](user-service/README.md#sendotp) — implemented; starts signup and
   sends the email verification code.
+- [`VerifyOTP`](user-service/README.md#verifyotp) — implemented; consumes the
+  OTP and creates the verified user.
+- [`Login`](user-service/README.md#login) — implemented; validates credentials
+  and returns access/refresh tokens to the gateway.
 
 [Read the user service feature summary](user-service/README.md#features)
 
