@@ -10,6 +10,7 @@ service UserService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc SendOTP(SendOTPRequest) returns (SendOTPResponse);
   rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
 }
 
 // ####### RPC SendOTP  #######
@@ -27,7 +28,20 @@ message SendOTPResponse {
   string otp_session_id = 3;
 }
 
-// RPC Verify OTP
+// ####### RPC Login  #######
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  User user = 3;
+  int64 access_token_expires_in = 4;
+  int64 refresh_token_expires_in = 5;
+}
+// ####### RPC VerifyOTP  #######
 message VerifyOTPRequest {
   string otp = 1;
   string otp_session_id = 2;

@@ -4,9 +4,12 @@ import (
 	"context"
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
+	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/interceptors"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -95,4 +98,44 @@ func (this *UserService) VerifyOTP(ctx context.Context, req *userv1.VerifyOTPReq
 		Success:       true,
 		StatusMessage: "User account created successfully!",
 	}, nil
+}
+
+func (this *UserService) Login(ctx context.Context, req *userv1.LoginRequest) (*userv1.LoginResponse, error) {
+	email := req.Email
+	password := req.Password
+	meta, ok := interceptors.GetMetaFromContext(ctx)
+	if !ok || meta == nil {
+		return nil, status.Error(codes.Internal, "request metadata unavailable")
+	}
+
+	if len(email) == 0 || len(password) == 0 {
+		return nil, custom_errors.ERR_BAD_REQUEST
+	}
+
+	accessToken, refreshToken, loggedInUser, err := handleLogin(
+		ctx, LoginInput{
+			Config:   this.Config,
+			Redis:    this.RedisClient,
+			DB:       this.DB,
+			Email:    email,
+			Password: password,
+			DeviceId: meta.DeviceFingerprint,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &userv1.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User: &userv1.User{
+			FirstName:     loggedInUser.FirstName,
+			LastName:      loggedInUser.LastName,
+			Email:         loggedInUser.Email,
+			EmailVerified: loggedInUser.EmailVerified,
+		},
+		AccessTokenExpiresIn:  int64(this.Config.AccessTokenExp),
+		RefreshTokenExpiresIn: int64(this.Config.RefreshTokenExp),
+	}, nil
+
 }

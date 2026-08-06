@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -24,6 +25,15 @@ type VerifyOTPInput struct {
 	OtpSessionId string
 }
 
+type LoginInput struct {
+	Config   env.Config
+	Redis    *redis.Client
+	DB       *gorm.DB
+	Email    string
+	Password string
+	DeviceId string
+}
+
 type Meta struct {
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
@@ -34,4 +44,9 @@ type Meta struct {
 type OTPSessionData struct {
 	HashedOTP string `json:"hashed_otp"`
 	Meta      Meta   `json:"meta"`
+}
+
+type JWTPayload struct {
+	ID string `json:"id"`
+	jwt.RegisteredClaims
 }

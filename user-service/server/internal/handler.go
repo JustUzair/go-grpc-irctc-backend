@@ -8,7 +8,9 @@ import (
 	"time"
 
 	models "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
+	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -130,4 +132,37 @@ func handleVerifyOTP(ctx context.Context, input VerifyOTPInput) (*models.User, e
 	})
 	return &new_user, nil
 
+}
+
+func handleLogin(ctx context.Context, input LoginInput) (string, string, *models.User, error) {
+	db := input.DB
+	config := input.Config
+	email := input.Email
+	password := input.Password
+
+	var existingUser *models.User = nil
+	err := db.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) { // User doesnt exist
+			return "", "", nil, custom_errors.ERR_EMAIL_NOT_FOUND
+		} else {
+			log.Printf("DB query error: %v", err)
+			return "", "", nil, err
+		}
+	}
+	// User found check password match
+	err = bcrypt.CompareHashAndPassword([]byte(*existingUser.Password), []byte(password))
+	if err != nil {
+		return "", "", nil, custom_errors.ERR_INCORRECT_PASSWORD
+	}
+
+	accessToken, err := GenerateAccessToken(existingUser.ID, config)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error generating access token: %w", err)
+	}
+	refreshToken, err := GenerateRefreshToken(existingUser.ID, config)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error generating refresh token: %w", err)
+	}
+	return accessToken, refreshToken, existingUser, nil
 }

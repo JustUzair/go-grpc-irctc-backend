@@ -12,3 +12,5 @@ var ERR_INVALID_TEMPLATE = status.Error(codes.NotFound, "invalid email template"
 var ERR_BAD_REQUEST = status.Error(codes.InvalidArgument, "bad request")
 var ERR_PASSWORD_MISMATCH = status.Error(codes.InvalidArgument, "passwords do not match")
 var ERR_TOO_MANY_REQUESTS = status.Error(codes.ResourceExhausted, "too many requests")
+var ERR_EMAIL_NOT_FOUND = status.Error(codes.NotFound, "email not found")
+var ERR_INCORRECT_PASSWORD = status.Error(codes.Unauthenticated, "incorrect password")

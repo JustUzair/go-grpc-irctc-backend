@@ -11,7 +11,7 @@ type User struct {
 	ID            string    `gorm:"type:uuid;primaryKey" json:"id"`
 	FirstName     string    `gorm:"not_null" json:"first_name"`
 	LastName      string    `gorm:"not_null" json:"last_name"`
-	Email         string    `gorm:"not_null" json:"email"`
+	Email         string    `gorm:"not_null;unique" json:"email"`
 	Password      *string   `json:"password,omitempty"`
 	EmailVerified bool      `gorm:"default: false; not null" json:"email_verified"`
 	CreatedAt     time.Time `gorm:"autoCreateTime" json:"created_at"`
@@ -26,4 +26,13 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 		u.ID = uuid.NewString()
 	}
 	return
+}
+
+// TableName override via Tabler
+type Tabler interface {
+	TableName() string
+}
+
+func (User) TableName() string {
+	return "users"
 }

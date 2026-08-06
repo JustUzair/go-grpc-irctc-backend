@@ -13,6 +13,7 @@ import (
 
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
@@ -154,6 +155,76 @@ func hmacFor(secretKey string, email string, otp string) string {
 
 	// 3. Return as hex string
 	return hex.EncodeToString(h.Sum(nil))
+
+}
+
+// Auth Helpers
+
+func GenerateAccessToken(userId string, config env.Config) (string, error) {
+	payload := JWTPayload{
+		ID: userId,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.AccessTokenExp) * time.Second)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	tokenString, err := token.SignedString([]byte(config.JWTAccessSecretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+
+}
+
+func GenerateRefreshToken(userId string, config env.Config) (string, error) {
+	payload := JWTPayload{
+		ID: userId,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.RefreshTokenExp) * time.Second)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        uuid.NewString(), // jti
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	tokenString, err := token.SignedString([]byte(config.JWTRefreshSecretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+
+}
+
+// VerifyAccessToken validates an access token using the access secret key
+func VerifyAccessToken(tokenString string, config env.Config) (*JWTPayload, error) {
+	return verifyToken(tokenString, config.JWTAccessSecretKey)
+}
+
+// VerifyRefreshToken validates a refresh token using the refresh secret key
+func VerifyRefreshToken(tokenString string, config env.Config) (*JWTPayload, error) {
+	return verifyToken(tokenString, config.JWTRefreshSecretKey)
+}
+
+func verifyToken(tokenString string, secret string) (*JWTPayload, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTPayload{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*JWTPayload); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
 }
 
 // Redis Session Keys
@@ -163,7 +234,7 @@ func getOTPRateKey(email string) string {
 }
 
 func getOTPAttemptsKey(email string) string {
-	return fmt.Sprintf("otp:atttempts:%s", email)
+	return fmt.Sprintf("otp:attempts:%s", email)
 }
 
 func getOTPSessionKey(session_id string) string {
