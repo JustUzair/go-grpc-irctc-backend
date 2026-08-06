@@ -7,6 +7,7 @@ import (
 	"time"
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
+	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/interceptors"
 	service "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/internal"
 	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
 
@@ -31,6 +32,7 @@ func main() {
 		MaxOpenConns: 10,
 		MaxIdleConns: 5,
 	})
+
 	if err != nil {
 		log.Fatalf("connect to user database: %v", err)
 	}
@@ -54,7 +56,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logger.UnaryServerLoggerInterceptor))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(logger.UnaryServerLoggerInterceptor, interceptors.MetaInterceptor))
 	userService := &service.UserService{
 		DB:          db,
 		RedisClient: redisClient,
