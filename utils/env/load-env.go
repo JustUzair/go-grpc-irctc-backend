@@ -31,6 +31,10 @@ const (
 	otpRateMaxPerHour     = "OTP_RATE_MAX_PER_HOUR"
 	otpMaxVerifyAttempts  = "OTP_MAX_VERIFY_ATTEMPTS"
 	otpHmacSecret         = "OTP_HMAC_SECRET"
+	jwtAccessSecretKey    = "JWT_ACCESS_SECRET_KEY"
+	jwtRefreshSecretKey   = "JWT_REFRESH_SECRET_KEY"
+	accessTokenExp        = "ACCESS_TOKEN_EXP"
+	refreshTokenExp       = "REFRESH_TOKEN_EXP"
 )
 
 type Config struct {
@@ -54,6 +58,10 @@ type Config struct {
 	OtpRateMaxPerHour    int
 	OtpMaxVerifyAttempts int
 	OtpHmacSecret        string
+	JWTAccessSecretKey   string
+	JWTRefreshSecretKey  string
+	AccessTokenExp       int
+	RefreshTokenExp      int
 }
 
 func Load() (Config, error) {
@@ -82,6 +90,10 @@ func Load() (Config, error) {
 		OtpRateMaxPerHour:    getEnvInt(otpRateMaxPerHour, 5),
 		OtpMaxVerifyAttempts: getEnvInt(otpMaxVerifyAttempts, 5),
 		OtpHmacSecret:        os.Getenv(otpHmacSecret),
+		JWTAccessSecretKey:   os.Getenv(jwtAccessSecretKey),
+		JWTRefreshSecretKey:  os.Getenv(jwtRefreshSecretKey),
+		AccessTokenExp:       getEnvInt(accessTokenExp, 900),
+		RefreshTokenExp:      getEnvInt(refreshTokenExp, 2628000),
 	}, nil
 }
 
