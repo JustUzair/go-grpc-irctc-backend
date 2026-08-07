@@ -122,6 +122,7 @@ func (this *UserService) Login(ctx context.Context, req *userv1.LoginRequest) (*
 			DeviceId: meta.DeviceFingerprint,
 		},
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -138,4 +139,36 @@ func (this *UserService) Login(ctx context.Context, req *userv1.LoginRequest) (*
 		RefreshTokenExpiresIn: int64(this.Config.RefreshTokenExp),
 	}, nil
 
+}
+
+func (this *UserService) RotateRefreshToken(ctx context.Context, req *userv1.RotateRefreshTokenRequest) (*userv1.RotateRefreshTokenResponse, error) {
+	refreshToken := req.RefreshToken
+	meta, ok := interceptors.GetMetaFromContext(ctx)
+	if !ok || meta == nil {
+		return nil, status.Error(codes.Internal, "request metadata unavailable")
+	}
+
+	if len(refreshToken) == 0 {
+		return nil, custom_errors.ERR_UNAUTHORIZED
+	}
+	deviceId := meta.DeviceFingerprint
+
+	newAccessToken, newRefreshToken, err := handleRotateRefreshToken(
+		ctx, RotateRefreshTokenInput{
+			Config:       this.Config,
+			Redis:        this.RedisClient,
+			DB:           this.DB,
+			RefreshToken: refreshToken,
+			DeviceId:     deviceId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &userv1.RotateRefreshTokenResponse{
+		AccessToken:           newAccessToken,
+		RefreshToken:          newRefreshToken,
+		AccessTokenExpiresIn:  int64(this.Config.AccessTokenExp),
+		RefreshTokenExpiresIn: int64(this.Config.RefreshTokenExp),
+	}, nil
 }

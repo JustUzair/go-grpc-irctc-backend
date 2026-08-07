@@ -49,7 +49,7 @@ func RemoveStoredOTP(
 
 func GenerateAndStoreOTP(ctx context.Context, redis *redis.Client, config env.Config, meta *Meta) (string, string, error) {
 
-	var rate_key string = getOTPRateKey(meta.Email)
+	var rate_key string = GetOTPRateKey(meta.Email)
 
 	sent_count, err := redis.Get(ctx, rate_key).Int()
 
@@ -79,7 +79,7 @@ func GenerateAndStoreOTP(ctx context.Context, redis *redis.Client, config env.Co
 		return "", "", fmt.Errorf("failed to marshal session data: %w", err)
 	}
 	ttl := time.Duration(config.OTPTTL) * time.Second
-	redis_otp_session_key := getOTPSessionKey(otp_session_id.String())
+	redis_otp_session_key := GetOTPSessionKey(otp_session_id.String())
 	err = redis.Set(ctx, redis_otp_session_key, sessionJSON, ttl).Err()
 
 	if err != nil {
@@ -92,7 +92,7 @@ func GenerateAndStoreOTP(ctx context.Context, redis *redis.Client, config env.Co
 
 func VerifyAndConsumeOTP(ctx context.Context, redis *redis.Client, config env.Config, otp string, otp_session_id string) *Meta {
 	var session_payload OTPSessionData
-	redis_otp_session_key := getOTPSessionKey(otp_session_id)
+	redis_otp_session_key := GetOTPSessionKey(otp_session_id)
 
 	otp_session_data, err := redis.Get(ctx, redis_otp_session_key).Result()
 	if err != nil || otp_session_data == "" {
@@ -103,7 +103,7 @@ func VerifyAndConsumeOTP(ctx context.Context, redis *redis.Client, config env.Co
 	}
 	storedOtp := session_payload.HashedOTP
 	var meta Meta = session_payload.Meta
-	var attempts_key string = getOTPAttemptsKey(meta.Email)
+	var attempts_key string = GetOTPAttemptsKey(meta.Email)
 
 	attempt_count, err := redis.Get(ctx, attempts_key).Int()
 
@@ -117,7 +117,7 @@ func VerifyAndConsumeOTP(ctx context.Context, redis *redis.Client, config env.Co
 
 	hashedOtp := hmacFor(config.OtpHmacSecret, meta.Email, string(otp))
 	if hmac.Equal([]byte(storedOtp), []byte(hashedOtp)) {
-		redis.Del(ctx, redis_otp_session_key, attempts_key, getOTPRateKey(meta.Email))
+		redis.Del(ctx, redis_otp_session_key, attempts_key, GetOTPRateKey(meta.Email))
 		return &meta
 	} else {
 
@@ -162,7 +162,7 @@ func hmacFor(secretKey string, email string, otp string) string {
 
 func GenerateAccessToken(userId string, config env.Config) (string, error) {
 	payload := JWTPayload{
-		ID: userId,
+		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.AccessTokenExp) * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -181,7 +181,7 @@ func GenerateAccessToken(userId string, config env.Config) (string, error) {
 
 func GenerateRefreshToken(userId string, config env.Config) (string, string, error) {
 	payload := JWTPayload{
-		ID: userId,
+		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.RefreshTokenExp) * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -229,14 +229,22 @@ func verifyToken(tokenString string, secret string) (*JWTPayload, error) {
 
 // Redis Session Keys
 
-func getOTPRateKey(email string) string {
+func GetOTPRateKey(email string) string {
 	return fmt.Sprintf("otp:rate:%s", email)
 }
 
-func getOTPAttemptsKey(email string) string {
+func GetOTPAttemptsKey(email string) string {
 	return fmt.Sprintf("otp:attempts:%s", email)
 }
 
-func getOTPSessionKey(session_id string) string {
+func GetOTPSessionKey(session_id string) string {
 	return fmt.Sprintf("otp:session:%s", session_id)
+}
+
+func GetRefreshTokenKey(userId string, deviceId string) string {
+	return fmt.Sprintf("refresh:%s:%s", userId, deviceId)
+}
+
+func GetUserKey(userId string) string {
+	return fmt.Sprintf("user:%s", userId)
 }

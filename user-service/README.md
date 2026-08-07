@@ -25,6 +25,11 @@ confirmation email.
 Checks credentials and returns signed access and refresh tokens with the
 authenticated user's public profile and token lifetimes.
 
+### `RotateRefreshToken`
+
+Validates the current refresh session, rejects a reused token, and returns a
+new access-token and refresh-token pair.
+
 ## Features
 
 ### Email OTP signup
@@ -40,6 +45,8 @@ authenticated user's public profile and token lifetimes.
   Resend.
 - Removes the pending OTP session when email delivery fails.
 - Issues signed access and refresh tokens after a successful password check.
+- Stores refresh-token JTIs in Redis and rotates them after a successful
+  refresh.
 - Captures request metadata through a gRPC interceptor for future session-risk
   handling.
 
@@ -49,5 +56,5 @@ to return a rate-limit error.
 
 ## Planned RPCs and features
 
-- Logout, refresh-token rotation, and server-side session revocation.
+- Logout and server-side session revocation.
 - Gateway-owned OTP session cookies.

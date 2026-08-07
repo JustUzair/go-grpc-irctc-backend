@@ -27,6 +27,8 @@ Supported RPCs:
   OTP and creates the verified user.
 - [`Login`](user-service/README.md#login) — implemented; validates credentials
   and returns access/refresh tokens to the gateway.
+- [`RotateRefreshToken`](user-service/README.md#rotaterefreshtoken) — implemented;
+  rotates the refresh session and issues a new token pair.
 
 [Read the user service feature summary](user-service/README.md#features)
 

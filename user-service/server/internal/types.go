@@ -34,6 +34,14 @@ type LoginInput struct {
 	DeviceId string
 }
 
+type RotateRefreshTokenInput struct {
+	Config       env.Config
+	Redis        *redis.Client
+	DB           *gorm.DB
+	RefreshToken string
+	DeviceId     string
+}
+
 type Meta struct {
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
@@ -47,6 +55,6 @@ type OTPSessionData struct {
 }
 
 type JWTPayload struct {
-	ID string `json:"id"`
+	UserID string `json:"id"`
 	jwt.RegisteredClaims
 }

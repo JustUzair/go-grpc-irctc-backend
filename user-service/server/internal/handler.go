@@ -170,13 +170,46 @@ func handleLogin(ctx context.Context, input LoginInput) (string, string, *models
 	if err != nil {
 		return "", "", nil, fmt.Errorf("error generating refresh token: %w", err)
 	}
-	refreskTokenKey := fmt.Sprintf("refresh:%s:%s", existingUser.ID, deviceId)
+	refreskTokenKey := GetRefreshTokenKey(deviceId, existingUser.ID)
 	redis.Set(ctx, refreskTokenKey, jti, time.Duration(config.RefreshTokenExp*int(time.Second)))
 	user, err := json.Marshal(existingUser)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("error marshaling user: %w", err)
 	}
-	userKey := fmt.Sprintf("user:%s", existingUser.ID)
+	userKey := GetUserKey(existingUser.ID)
 	redis.Set(ctx, userKey, user, time.Duration(config.RedisUserTTL*int(time.Second)))
 	return accessToken, refreshToken, existingUser, nil
+}
+
+func handleRotateRefreshToken(ctx context.Context, input RotateRefreshTokenInput) (string, string, error) {
+	redis := input.Redis
+	payload, err := VerifyRefreshToken(input.RefreshToken, input.Config)
+
+	if err != nil {
+		return "", "", err
+	}
+	userId := payload.UserID
+	deviceId := input.DeviceId
+	jti := payload.ID
+	refreshTokenKey := GetRefreshTokenKey(deviceId, userId)
+	storedJTI := redis.Get(ctx, refreshTokenKey).Val()
+	if len(storedJTI) == 0 {
+		return "", "", custom_errors.ERR_SESSION_EXPIRED
+	}
+	// Check if JTI has been reused
+	if storedJTI != jti {
+		redis.Del(ctx, refreshTokenKey)
+		return "", "", custom_errors.ERR_SESSION_EXPIRED
+	}
+	newAccessToken, err := GenerateAccessToken(userId, input.Config)
+	if err != nil {
+		return "", "", fmt.Errorf("error generating access token: %w", err)
+	}
+	newRefreshToken, newJTI, err := GenerateRefreshToken(userId, input.Config)
+	if err != nil {
+		return "", "", fmt.Errorf("error generating refresh token: %w", err)
+	}
+	redis.Set(ctx, refreshTokenKey, newJTI, time.Duration(input.Config.RefreshTokenExp*int(time.Second)))
+	return newAccessToken, newRefreshToken, nil
+
 }

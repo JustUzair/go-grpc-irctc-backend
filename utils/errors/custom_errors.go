@@ -14,3 +14,5 @@ var ERR_PASSWORD_MISMATCH = status.Error(codes.InvalidArgument, "passwords do no
 var ERR_TOO_MANY_REQUESTS = status.Error(codes.ResourceExhausted, "too many requests")
 var ERR_EMAIL_NOT_FOUND = status.Error(codes.NotFound, "email not found")
 var ERR_INCORRECT_PASSWORD = status.Error(codes.Unauthenticated, "incorrect password")
+var ERR_UNAUTHORIZED = status.Error(codes.Unauthenticated, "unauthorized")
+var ERR_SESSION_EXPIRED = status.Error(codes.Unauthenticated, "session expired, login again")
