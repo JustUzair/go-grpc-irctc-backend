@@ -179,7 +179,7 @@ func GenerateAccessToken(userId string, config env.Config) (string, error) {
 
 }
 
-func GenerateRefreshToken(userId string, config env.Config) (string, error) {
+func GenerateRefreshToken(userId string, config env.Config) (string, string, error) {
 	payload := JWTPayload{
 		ID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -192,10 +192,10 @@ func GenerateRefreshToken(userId string, config env.Config) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	tokenString, err := token.SignedString([]byte(config.JWTRefreshSecretKey))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return tokenString, nil
+	return tokenString, payload.ID, nil
 
 }
 

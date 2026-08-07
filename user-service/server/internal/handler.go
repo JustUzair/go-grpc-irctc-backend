@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -136,9 +137,11 @@ func handleVerifyOTP(ctx context.Context, input VerifyOTPInput) (*models.User, e
 
 func handleLogin(ctx context.Context, input LoginInput) (string, string, *models.User, error) {
 	db := input.DB
+	redis := input.Redis
 	config := input.Config
 	email := input.Email
 	password := input.Password
+	deviceId := input.DeviceId
 
 	var existingUser *models.User = nil
 	err := db.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error
@@ -150,7 +153,10 @@ func handleLogin(ctx context.Context, input LoginInput) (string, string, *models
 			return "", "", nil, err
 		}
 	}
-	// User found check password match
+	// User found; compare the supplied password with the stored hash.
+	if existingUser.Password == nil {
+		return "", "", nil, custom_errors.ERR_INCORRECT_PASSWORD
+	}
 	err = bcrypt.CompareHashAndPassword([]byte(*existingUser.Password), []byte(password))
 	if err != nil {
 		return "", "", nil, custom_errors.ERR_INCORRECT_PASSWORD
@@ -160,9 +166,17 @@ func handleLogin(ctx context.Context, input LoginInput) (string, string, *models
 	if err != nil {
 		return "", "", nil, fmt.Errorf("error generating access token: %w", err)
 	}
-	refreshToken, err := GenerateRefreshToken(existingUser.ID, config)
+	refreshToken, jti, err := GenerateRefreshToken(existingUser.ID, config)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("error generating refresh token: %w", err)
 	}
+	refreskTokenKey := fmt.Sprintf("refresh:%s:%s", existingUser.ID, deviceId)
+	redis.Set(ctx, refreskTokenKey, jti, time.Duration(config.RefreshTokenExp*int(time.Second)))
+	user, err := json.Marshal(existingUser)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error marshaling user: %w", err)
+	}
+	userKey := fmt.Sprintf("user:%s", existingUser.ID)
+	redis.Set(ctx, userKey, user, time.Duration(config.RedisUserTTL*int(time.Second)))
 	return accessToken, refreshToken, existingUser, nil
 }

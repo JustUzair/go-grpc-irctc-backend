@@ -35,6 +35,7 @@ const (
 	jwtRefreshSecretKey   = "JWT_REFRESH_SECRET_KEY"
 	accessTokenExp        = "ACCESS_TOKEN_EXP"
 	refreshTokenExp       = "REFRESH_TOKEN_EXP"
+	redisUserTTL          = "REDIS_USER_TTL"
 )
 
 type Config struct {
@@ -62,6 +63,7 @@ type Config struct {
 	JWTRefreshSecretKey  string
 	AccessTokenExp       int
 	RefreshTokenExp      int
+	RedisUserTTL         int
 }
 
 func Load() (Config, error) {
@@ -94,6 +96,7 @@ func Load() (Config, error) {
 		JWTRefreshSecretKey:  os.Getenv(jwtRefreshSecretKey),
 		AccessTokenExp:       getEnvInt(accessTokenExp, 900),
 		RefreshTokenExp:      getEnvInt(refreshTokenExp, 2628000),
+		RedisUserTTL:         getEnvInt(redisUserTTL, 86400),
 	}, nil
 }
 

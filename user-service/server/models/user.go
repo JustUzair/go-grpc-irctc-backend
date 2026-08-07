@@ -12,7 +12,7 @@ type User struct {
 	FirstName     string    `gorm:"not_null" json:"first_name"`
 	LastName      string    `gorm:"not_null" json:"last_name"`
 	Email         string    `gorm:"not_null;unique" json:"email"`
-	Password      *string   `json:"password,omitempty"`
+	Password      *string   `json:"-"`
 	EmailVerified bool      `gorm:"default: false; not null" json:"email_verified"`
 	CreatedAt     time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt     time.Time `gorm:"autoUpdateTime" json:"updated_at"`
