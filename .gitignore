@@ -37,6 +37,8 @@ features.md
 guide.md
 user-service/guide.md
 Todo.md
+user-service/temp.md
+user-service/server/models/interface.go
 
 # Ignore generated protobuf files
 gen/

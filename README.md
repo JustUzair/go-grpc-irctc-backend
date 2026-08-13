@@ -29,6 +29,8 @@ Supported RPCs:
   and returns access/refresh tokens to the gateway.
 - [`RotateRefreshToken`](user-service/README.md#rotaterefreshtoken) — implemented;
   rotates the refresh session and issues a new token pair.
+- [`VerifyGoogleIDToken`](user-service/README.md#verifygoogleidtoken) — contract
+  added; token verification and account linking are not implemented yet.
 
 [Read the user service feature summary](user-service/README.md#features)
 

@@ -30,6 +30,11 @@ authenticated user's public profile and token lifetimes.
 Validates the current refresh session, rejects a reused token, and returns a
 new access-token and refresh-token pair.
 
+### `VerifyGoogleIDToken`
+
+Contract placeholder for Google Identity Services sign-in. Verification and
+local account linking are not implemented yet.
+
 ## Features
 
 ### Email OTP signup
@@ -47,6 +52,8 @@ new access-token and refresh-token pair.
 - Issues signed access and refresh tokens after a successful password check.
 - Stores refresh-token JTIs in Redis and rotates them after a successful
   refresh.
+- Defines a PostgreSQL auth-provider model for external identities with
+  composite uniqueness constraints.
 - Captures request metadata through a gRPC interceptor for future session-risk
   handling.
 

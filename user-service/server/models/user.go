@@ -8,14 +8,15 @@ import (
 )
 
 type User struct {
-	ID            string    `gorm:"type:uuid;primaryKey" json:"id"`
-	FirstName     string    `gorm:"not_null" json:"first_name"`
-	LastName      string    `gorm:"not_null" json:"last_name"`
-	Email         string    `gorm:"not_null;unique" json:"email"`
-	Password      *string   `json:"-"`
-	EmailVerified bool      `gorm:"default: false; not null" json:"email_verified"`
-	CreatedAt     time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt     time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	ID            string         `gorm:"type:uuid;primaryKey" json:"id"`
+	FirstName     string         `gorm:"not null" json:"first_name"`
+	LastName      string         `gorm:"not null" json:"last_name"`
+	Email         string         `gorm:"not null;unique" json:"email"`
+	Password      *string        `json:"-"`
+	EmailVerified bool           `gorm:"default: false; not null" json:"email_verified"`
+	CreatedAt     time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt     time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	AuthProviders []AuthProvider `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"auth_providers"`
 }
 
 // Hooks
@@ -26,11 +27,6 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 		u.ID = uuid.NewString()
 	}
 	return
-}
-
-// TableName override via Tabler
-type Tabler interface {
-	TableName() string
 }
 
 func (User) TableName() string {

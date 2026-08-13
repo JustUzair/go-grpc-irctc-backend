@@ -43,7 +43,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.AuthProvider{}); err != nil {
 		log.Fatalf("auto-migrate user schema: %v", err)
 	}
 
