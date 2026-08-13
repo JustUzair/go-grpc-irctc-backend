@@ -12,6 +12,7 @@ service UserService {
   rpc VerifyOTP(VerifyOTPRequest) returns (VerifyOTPResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc RotateRefreshToken(RotateRefreshTokenRequest) returns (RotateRefreshTokenResponse);
+  rpc VerifyGoogleIDToken(VerifyGoogleIDTokenRequest) returns (VerifyGoogleIDTokenResponse);
 }
 
 // ####### RPC SendOTP  #######
@@ -53,6 +54,7 @@ message RotateRefreshTokenResponse {
   int64 access_token_expires_in = 4;
   int64 refresh_token_expires_in = 5;
 }
+
 // ####### RPC VerifyOTP  #######
 message VerifyOTPRequest {
   string otp = 1;
@@ -70,3 +72,9 @@ message GetUserRequest {}
 message GetUserResponse {
   User user = 1;
 }
+
+// ####### RPC Verify Google OAuth 2.0 ID Token  #######
+message VerifyGoogleIDTokenRequest {
+  string id_token = 1;
+}
+message VerifyGoogleIDTokenResponse {}

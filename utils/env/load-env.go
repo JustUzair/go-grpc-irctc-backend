@@ -36,6 +36,8 @@ const (
 	accessTokenExp        = "ACCESS_TOKEN_EXP"
 	refreshTokenExp       = "REFRESH_TOKEN_EXP"
 	redisUserTTL          = "REDIS_USER_TTL"
+	googleClientId        = "GOOGLE_CLIENT_ID"
+	googleClientSecret    = "GOOGLE_CLIENT_SECRET"
 )
 
 type Config struct {
@@ -64,6 +66,8 @@ type Config struct {
 	AccessTokenExp       int
 	RefreshTokenExp      int
 	RedisUserTTL         int
+	GoogleClientID       string
+	GoogleClientSecret   string
 }
 
 func Load() (Config, error) {
@@ -97,6 +101,8 @@ func Load() (Config, error) {
 		AccessTokenExp:       getEnvInt(accessTokenExp, 900),
 		RefreshTokenExp:      getEnvInt(refreshTokenExp, 2628000),
 		RedisUserTTL:         getEnvInt(redisUserTTL, 86400),
+		GoogleClientID:       os.Getenv(googleClientId),
+		GoogleClientSecret:   os.Getenv(googleClientSecret),
 	}, nil
 }
 

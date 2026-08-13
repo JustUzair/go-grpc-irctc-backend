@@ -172,3 +172,7 @@ func (this *UserService) RotateRefreshToken(ctx context.Context, req *userv1.Rot
 		RefreshTokenExpiresIn: int64(this.Config.RefreshTokenExp),
 	}, nil
 }
+
+func (this *UserService) VerifyGoogleIDToken(ctx context.Context, req *userv1.VerifyGoogleIDTokenRequest) (*userv1.VerifyGoogleIDTokenResponse, error) {
+	return &userv1.VerifyGoogleIDTokenResponse{}, nil
+}
