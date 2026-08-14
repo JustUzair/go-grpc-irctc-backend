@@ -143,14 +143,14 @@ func (this *UserService) Login(ctx context.Context, req *userv1.LoginRequest) (*
 
 func (this *UserService) RotateRefreshToken(ctx context.Context, req *userv1.RotateRefreshTokenRequest) (*userv1.RotateRefreshTokenResponse, error) {
 	refreshToken := req.RefreshToken
+	if len(refreshToken) == 0 {
+		return nil, custom_errors.ERR_UNAUTHORIZED
+	}
 	meta, ok := interceptors.GetMetaFromContext(ctx)
 	if !ok || meta == nil {
 		return nil, status.Error(codes.Internal, "request metadata unavailable")
 	}
 
-	if len(refreshToken) == 0 {
-		return nil, custom_errors.ERR_UNAUTHORIZED
-	}
 	deviceId := meta.DeviceFingerprint
 
 	newAccessToken, newRefreshToken, err := handleRotateRefreshToken(
@@ -174,5 +174,35 @@ func (this *UserService) RotateRefreshToken(ctx context.Context, req *userv1.Rot
 }
 
 func (this *UserService) VerifyGoogleIDToken(ctx context.Context, req *userv1.VerifyGoogleIDTokenRequest) (*userv1.VerifyGoogleIDTokenResponse, error) {
-	return &userv1.VerifyGoogleIDTokenResponse{}, nil
+	idToken := req.IdToken
+	if len(idToken) == 0 {
+		return nil, custom_errors.ERR_BAD_REQUEST
+	}
+	meta, ok := interceptors.GetMetaFromContext(ctx)
+	if !ok || meta == nil {
+		return nil, status.Error(codes.Internal, "request metadata unavailable")
+	}
+	accessToken, refreshToken, googleUser, err := handleVerifyGoogleIDToken(ctx, VerifyGoogleIDTokenInput{
+		Config:   this.Config,
+		Redis:    this.RedisClient,
+		DB:       this.DB,
+		IDToken:  idToken,
+		DeviceId: meta.DeviceFingerprint,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &userv1.VerifyGoogleIDTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User: &userv1.User{
+			FirstName:     googleUser.FirstName,
+			LastName:      googleUser.LastName,
+			Email:         googleUser.Email,
+			EmailVerified: googleUser.EmailVerified,
+		},
+		AccessTokenExpiresIn:  int64(this.Config.AccessTokenExp),
+		RefreshTokenExpiresIn: int64(this.Config.RefreshTokenExp),
+	}, nil
 }

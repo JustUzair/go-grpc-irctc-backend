@@ -12,6 +12,7 @@ import (
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
 	"golang.org/x/crypto/bcrypt"
+	idtoken "google.golang.org/api/idtoken"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -211,5 +212,117 @@ func handleRotateRefreshToken(ctx context.Context, input RotateRefreshTokenInput
 	}
 	redis.Set(ctx, refreshTokenKey, newJTI, time.Duration(input.Config.RefreshTokenExp*int(time.Second)))
 	return newAccessToken, newRefreshToken, nil
+
+}
+
+func handleVerifyGoogleIDToken(ctx context.Context, input VerifyGoogleIDTokenInput) (string, string, *models.User, error) {
+	idToken := input.IDToken
+	config := input.Config
+	db := input.DB
+	redis := input.Redis
+	deviceId := input.DeviceId
+	payload, err := idtoken.Validate(ctx, idToken, config.GoogleClientID)
+	if err != nil {
+		return "", "", nil, custom_errors.ERR_UNAUTHORIZED
+	}
+
+	email, ok := payload.Claims["email"].(string)
+	if !ok || len(email) == 0 {
+		return "", "", nil, custom_errors.ERR_BAD_REQUEST
+	}
+
+	firstName, _ := payload.Claims["given_name"].(string)
+	lastName, _ := payload.Claims["family_name"].(string)
+	emailVerified, ok := payload.Claims["email_verified"].(bool)
+	if !ok || !emailVerified || len(payload.Subject) == 0 {
+		return "", "", nil, custom_errors.ERR_UNAUTHORIZED
+	}
+
+	googleUser := &VerifyGoogleIDTokenOutput{
+		Provider:      payload.Issuer,
+		ProviderID:    payload.Subject,
+		Email:         email,
+		FirstName:     firstName,
+		LastName:      lastName,
+		EmailVerified: emailVerified,
+	}
+
+	var targetUser *models.User
+	txErr := db.Transaction(func(tx *gorm.DB) error {
+
+		// CASE 1. Check if google account already exists in auth-providers table
+		var googleAuth *models.AuthProvider = nil
+		err := tx.WithContext(ctx).Preload("User").Where("provider_id = ? AND provider = ?", googleUser.ProviderID, googleUser.Provider).First(&googleAuth).Error
+		if err == nil {
+			if googleAuth == nil || googleAuth.User == nil {
+				return fmt.Errorf("google auth provider has no associated user")
+			}
+
+			targetUser = googleAuth.User
+			return nil
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("db error checking auth provider: %w", err)
+		}
+
+		// CASE 2. Check if user normally signed up with email, password; and is now trying to login with google, if so link the account with auth provider
+		var existingUser *models.User
+		err = tx.WithContext(ctx).Where("email = ?", googleUser.Email).First(&existingUser).Error
+		if err == nil {
+			newGoogleAuthUser := models.AuthProvider{
+				Provider:   googleUser.Provider,
+				ProviderID: googleUser.ProviderID,
+				UserID:     existingUser.ID,
+			}
+			err := tx.WithContext(ctx).Create(&newGoogleAuthUser).Error
+			if err != nil {
+				return fmt.Errorf("failed to link google auth provider: %w", err)
+			}
+			targetUser = existingUser
+			return nil
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("db error checking user email: %w", err)
+		}
+
+		// CASE 3. User and Auth Provider do not exist, create both
+		newUser := models.User{
+			Email:         email,
+			FirstName:     firstName,
+			LastName:      lastName,
+			EmailVerified: emailVerified,
+			AuthProviders: []models.AuthProvider{
+				{
+					Provider:   googleUser.Provider,
+					ProviderID: googleUser.ProviderID,
+				},
+			},
+		}
+		if err := tx.WithContext(ctx).Create(&newUser).Error; err != nil {
+			return fmt.Errorf("failed to create new user with google provider: %w", err)
+		}
+		targetUser = &newUser
+		return nil
+	})
+	if txErr != nil {
+		return "", "", nil, txErr
+	}
+	accessToken, err := GenerateAccessToken(targetUser.ID, config)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error generating access token: %w", err)
+	}
+	refreshToken, jti, err := GenerateRefreshToken(targetUser.ID, config)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error generating refresh token: %w", err)
+	}
+	refreskTokenKey := GetRefreshTokenKey(deviceId, targetUser.ID)
+	redis.Set(ctx, refreskTokenKey, jti, time.Duration(config.RefreshTokenExp*int(time.Second)))
+	user, err := json.Marshal(targetUser)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error marshaling user: %w", err)
+	}
+	userKey := GetUserKey(targetUser.ID)
+	redis.Set(ctx, userKey, user, time.Duration(config.RedisUserTTL*int(time.Second)))
+	return accessToken, refreshToken, targetUser, nil
 
 }

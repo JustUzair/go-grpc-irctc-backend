@@ -42,6 +42,23 @@ type RotateRefreshTokenInput struct {
 	DeviceId     string
 }
 
+type VerifyGoogleIDTokenInput struct {
+	Config   env.Config
+	Redis    *redis.Client
+	DB       *gorm.DB
+	IDToken  string
+	DeviceId string
+}
+
+type VerifyGoogleIDTokenOutput struct {
+	Provider      string
+	ProviderID    string
+	Email         string
+	FirstName     string
+	LastName      string
+	EmailVerified bool
+}
+
 type Meta struct {
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
