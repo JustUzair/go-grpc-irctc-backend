@@ -32,8 +32,9 @@ new access-token and refresh-token pair.
 
 ### `VerifyGoogleIDToken`
 
-Contract placeholder for Google Identity Services sign-in. Verification and
-local account linking are not implemented yet.
+Validates a Google ID token, links it to an existing local account with the
+same verified email, or creates a new local account. It returns service-issued
+access and refresh tokens.
 
 ## Features
 
@@ -47,13 +48,14 @@ local account linking are not implemented yet.
 - Caches pending signup sessions in Redis with a short expiry.
 - Limits repeated OTP requests per email with an expiring Redis counter.
 - Renders the signup email from an embedded HTML template and sends it through
-  Resend.
+  the configured mail provider.
 - Removes the pending OTP session when email delivery fails.
 - Issues signed access and refresh tokens after a successful password check.
 - Stores refresh-token JTIs in Redis and rotates them after a successful
   refresh.
-- Defines a PostgreSQL auth-provider model for external identities with
-  composite uniqueness constraints.
+- Supports Google Identity Services sign-in through validated ID tokens.
+- Links external identities to local accounts through a PostgreSQL
+  auth-provider model with composite uniqueness constraints.
 - Captures request metadata through a gRPC interceptor for future session-risk
   handling.
 

@@ -7,15 +7,15 @@ provides service-owned databases, while Redis handles short-lived state such as
 OTP signup sessions and request limits.
 
 Core stack: Go 1.26, gRPC, Protobuf, Buf, PostgreSQL, GORM, Redis, Docker
-Compose, and Resend.
+Compose, Resend/Mailtrap, and Google Identity Services.
 
 ## Services
 
 ### User service
 
 Handles signup, user accounts, and authentication. The current implementation
-supports email verification signup and password login with signed access and
-refresh tokens.
+supports email verification signup, password login, refresh-token rotation, and
+Google ID-token sign-in with linked external identities.
 
 Supported RPCs:
 
@@ -30,7 +30,8 @@ Supported RPCs:
 - [`RotateRefreshToken`](user-service/README.md#rotaterefreshtoken) — implemented;
   rotates the refresh session and issues a new token pair.
 - [`VerifyGoogleIDToken`](user-service/README.md#verifygoogleidtoken) — contract
-  added; token verification and account linking are not implemented yet.
+  implemented; validates Google ID tokens, links or creates a local account,
+  and returns service-issued access/refresh tokens.
 
 [Read the user service feature summary](user-service/README.md#features)
 
