@@ -16,7 +16,7 @@ type User struct {
 	EmailVerified bool           `gorm:"default: false; not null" json:"email_verified"`
 	CreatedAt     time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt     time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
-	AuthProviders []AuthProvider `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"auth_providers"`
+	AuthProviders []AuthProvider `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
 // Hooks
