@@ -10,6 +10,7 @@ import (
 	env "github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // Smoke test client --> TODO entrypoint client wrappers
@@ -29,15 +30,16 @@ func main() {
 	client := userv1.NewUserServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	// res, err := client.GetUser(context.Background(), &userv1.GetUserRequest{})
+	// Supply a valid access token here. The gateway will eventually do this
+	// when it forwards an authenticated browser request.
+	accessToken := "<access-token-from-login>"
+	ctx = metadata.AppendToOutgoingContext(
+		ctx,
+		"authorization",
+		"Bearer "+accessToken,
+	)
 
-	res, err := client.SendOTP(ctx, &userv1.SendOTPRequest{
-		FirstName:       "John",
-		LastName:        "Doe",
-		Email:           "johndoe@gmail.com",
-		Password:        "123456",
-		ConfirmPassword: "123456",
-	})
+	res, err := client.GetUser(ctx, &userv1.GetUserRequest{})
 
 	if err != nil {
 		log.Fatalf("Failed to get user: %v", err)
