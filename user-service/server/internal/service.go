@@ -4,10 +4,11 @@ import (
 	"context"
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
-	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/interceptors"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
+	custom_interceptors "github.com/JustUzair/go-grpc-irctc-backend/utils/interceptors"
+
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -107,7 +108,7 @@ func (this *UserService) VerifyOTP(ctx context.Context, req *userv1.VerifyOTPReq
 func (this *UserService) Login(ctx context.Context, req *userv1.LoginRequest) (*userv1.LoginResponse, error) {
 	email := req.Email
 	password := req.Password
-	meta, ok := interceptors.GetMetaFromContext(ctx)
+	meta, ok := custom_interceptors.GetMetaFromContext(ctx)
 	if !ok || meta == nil {
 		return nil, status.Error(codes.Internal, "request metadata unavailable")
 	}
@@ -150,7 +151,7 @@ func (this *UserService) RotateRefreshToken(ctx context.Context, req *userv1.Rot
 	if len(refreshToken) == 0 {
 		return nil, custom_errors.ERR_UNAUTHORIZED
 	}
-	meta, ok := interceptors.GetMetaFromContext(ctx)
+	meta, ok := custom_interceptors.GetMetaFromContext(ctx)
 	if !ok || meta == nil {
 		return nil, status.Error(codes.Internal, "request metadata unavailable")
 	}
@@ -182,7 +183,7 @@ func (this *UserService) VerifyGoogleIDToken(ctx context.Context, req *userv1.Ve
 	if len(idToken) == 0 {
 		return nil, custom_errors.ERR_BAD_REQUEST
 	}
-	meta, ok := interceptors.GetMetaFromContext(ctx)
+	meta, ok := custom_interceptors.GetMetaFromContext(ctx)
 	if !ok || meta == nil {
 		return nil, status.Error(codes.Internal, "request metadata unavailable")
 	}

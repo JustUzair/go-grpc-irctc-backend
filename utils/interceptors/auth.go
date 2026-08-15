@@ -1,41 +1,53 @@
-package logger
+package interceptors
 
 import (
 	"context"
-	"log"
-	"strings"
 
-	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/auth"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
+	grpcInterceptors "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	grpcSelector "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/selector"
+
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func UnaryServerAuthInterceptor(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, custom_errors.ERR_MISSING_METADATA
+func AccessTokenAuth(config env.Config) grpcAuth.AuthFunc {
+	return func(ctx context.Context) (context.Context, error) {
+		token, err := grpcAuth.AuthFromMD(ctx, "bearer")
+		if err != nil {
+			return nil, err
+		}
+		claims, err := auth.VerifyAccessToken(token, config)
+		if err != nil {
+			return nil, status.Error(
+				codes.Unauthenticated,
+				"invalid access token",
+			)
+		}
+		return auth.WithUserID(ctx, claims.UserID), nil
 	}
-
-	if !valid(md["authorization"]) {
-		return nil, custom_errors.ERR_INVALID_TOKEN
-	}
-	m, err := handler(ctx, req)
-	if err != nil {
-		log.Default().Fatalf("RPC failed with error: %v\n", err)
-	}
-	return m, err
-
 }
 
-// valid validates the authorization.
-func valid(authorization []string) bool {
-	if len(authorization) < 1 {
-		return false
+func MatchMethods(methods ...string) func(context.Context, grpcInterceptors.CallMeta) bool {
+	protected := make(map[string]struct{}, len(methods))
+	for _, method := range methods {
+		protected[method] = struct{}{}
 	}
-	token := strings.TrimPrefix(authorization[0], "Bearer ")
-	// Perform the token validation here. For the sake of this example, the code
-	// here forgoes any of the usual OAuth2 token validation and instead checks
-	// for a token matching an arbitrary string.
-	return token == "some-secret-token"
+	return func(ctx context.Context, call grpcInterceptors.CallMeta) bool {
+		_, ok := protected[call.FullMethod()]
+		return ok
+	}
+}
+
+func UnaryServerAuthInterceptor(
+	config env.Config,
+	protectedMethods ...string,
+) grpc.UnaryServerInterceptor {
+	return grpcSelector.UnaryServerInterceptor(
+		grpcAuth.UnaryServerInterceptor(AccessTokenAuth(config)),
+		grpcSelector.MatchFunc(MatchMethods(protectedMethods...)),
+	)
 }

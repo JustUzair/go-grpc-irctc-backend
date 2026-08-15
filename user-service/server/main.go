@@ -12,13 +12,13 @@ import (
 	"time"
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
-	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/interceptors"
+
 	service "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/internal"
 	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
 
 	"github.com/JustUzair/go-grpc-irctc-backend/utils"
 	env "github.com/JustUzair/go-grpc-irctc-backend/utils/env"
-	logger "github.com/JustUzair/go-grpc-irctc-backend/utils/interceptors"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/interceptors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -89,7 +89,15 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	defer lis.Close()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(logger.UnaryServerLoggerInterceptor, interceptors.MetaInterceptor))
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptors.UnaryServerLoggerInterceptor,
+			interceptors.MetaInterceptor,
+			interceptors.UnaryServerAuthInterceptor(
+				config,
+				userv1.UserService_GetUser_FullMethodName),
+		),
+	)
 	userService := &service.UserService{
 		DB:          db,
 		RedisClient: redisClient,
