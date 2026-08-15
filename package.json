@@ -7,6 +7,7 @@
     "start-search-service": "go run ./search-service/server",
     "test:google-oauth": "go run ./scripts/google-oauth-test",
     "tests:integration": "go test -tags=integration ./tests -v -count=1",
+    "tests:kafka": "go test -tags=integration ./tests -run '^TestKafkaProducerConsumerIntegration$' -v -count=1",
     "tests:email": "go test -tags='integration mailtrap' ./tests -run '^TestMailtrapEmailIntegration$' -v -count=1",
     "tests:resend": "go test -tags='integration resend' ./tests -run '^TestResendEmailIntegration$' -v -count=1"
   },
