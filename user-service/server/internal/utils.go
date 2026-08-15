@@ -11,6 +11,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/auth"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -161,7 +162,7 @@ func hmacFor(secretKey string, email string, otp string) string {
 // Auth Helpers
 
 func GenerateAccessToken(userId string, config env.Config) (string, error) {
-	payload := JWTPayload{
+	payload := auth.JWTPayload{
 		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.AccessTokenExp) * time.Second)),
@@ -180,7 +181,7 @@ func GenerateAccessToken(userId string, config env.Config) (string, error) {
 }
 
 func GenerateRefreshToken(userId string, config env.Config) (string, string, error) {
-	payload := JWTPayload{
+	payload := auth.JWTPayload{
 		UserID: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.RefreshTokenExp) * time.Second)),
@@ -197,34 +198,6 @@ func GenerateRefreshToken(userId string, config env.Config) (string, string, err
 
 	return tokenString, payload.ID, nil
 
-}
-
-// VerifyAccessToken validates an access token using the access secret key
-func VerifyAccessToken(tokenString string, config env.Config) (*JWTPayload, error) {
-	return verifyToken(tokenString, config.JWTAccessSecretKey)
-}
-
-// VerifyRefreshToken validates a refresh token using the refresh secret key
-func VerifyRefreshToken(tokenString string, config env.Config) (*JWTPayload, error) {
-	return verifyToken(tokenString, config.JWTRefreshSecretKey)
-}
-
-func verifyToken(tokenString string, secret string) (*JWTPayload, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTPayload{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(secret), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(*JWTPayload); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, fmt.Errorf("invalid token")
 }
 
 // Redis Session Keys
