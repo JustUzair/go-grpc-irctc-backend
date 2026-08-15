@@ -11,6 +11,7 @@ import (
 	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/internal/kafka/producer"
 	models "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/auth"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"golang.org/x/crypto/bcrypt"
 	idtoken "google.golang.org/api/idtoken"
@@ -189,7 +190,7 @@ func handleLogin(ctx context.Context, input LoginInput) (string, string, *models
 
 func handleRotateRefreshToken(ctx context.Context, input RotateRefreshTokenInput) (string, string, error) {
 	redis := input.Redis
-	payload, err := VerifyRefreshToken(input.RefreshToken, input.Config)
+	payload, err := auth.VerifyRefreshToken(input.RefreshToken, input.Config)
 
 	if err != nil {
 		return "", "", err
