@@ -6,8 +6,8 @@ versioned Protobuf API and owns the data for its part of the system. PostgreSQL
 provides service-owned databases, while Redis handles short-lived state such as
 OTP signup sessions and request limits.
 
-Core stack: Go 1.26, gRPC, Protobuf, Buf, PostgreSQL, GORM, Redis, Docker
-Compose, Resend/Mailtrap, and Google Identity Services.
+Core stack: Go 1.26, gRPC, Protobuf, Buf, PostgreSQL, GORM, Redis, Kafka,
+Docker Compose, Resend/Mailtrap, and Google Identity Services.
 
 ## Services
 
@@ -34,6 +34,14 @@ Supported RPCs:
   and returns service-issued access/refresh tokens.
 
 [Read the user service feature summary](user-service/README.md#features)
+
+### Notification service
+
+Consumes the user service's Kafka OTP and welcome events and owns email
+rendering and delivery. It currently exposes the standard gRPC health service;
+its application work is driven by Kafka topics.
+
+[Read the notification service feature summary](notification-service/README.md#features)
 
 The booking, payment, and search services are set up but do not have completed
 business features yet. Their RPC links and summaries will be added as those

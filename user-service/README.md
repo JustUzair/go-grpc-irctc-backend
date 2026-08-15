@@ -13,12 +13,13 @@ Contract present; the lookup behavior is not implemented yet.
 ### `SendOTP`
 
 Starts account signup and sends a six-digit verification code by email. The
-caller receives a short-lived OTP session ID for the later verification step.
+user service publishes the notification event and the caller receives a
+short-lived OTP session ID for the later verification step.
 
 ### `VerifyOTP`
 
 Consumes the OTP session, creates the verified user account, and sends a
-confirmation email.
+publishes a welcome notification event.
 
 ### `Login`
 
@@ -47,9 +48,10 @@ access and refresh tokens.
   the plain code.
 - Caches pending signup sessions in Redis with a short expiry.
 - Limits repeated OTP requests per email with an expiring Redis counter.
-- Renders the signup email from an embedded HTML template and sends it through
-  the configured mail provider.
-- Removes the pending OTP session when email delivery fails.
+- Publishes a JSON OTP event to Kafka; notification-service owns email rendering
+  and delivery.
+- Removes the pending OTP session when the initial Kafka publish fails.
+- Publishes a JSON welcome event after the user record is created.
 - Issues signed access and refresh tokens after a successful password check.
 - Stores refresh-token JTIs in Redis and rotates them after a successful
   refresh.
@@ -58,6 +60,14 @@ access and refresh tokens.
   auth-provider model with composite uniqueness constraints.
 - Captures request metadata through a gRPC interceptor for future session-risk
   handling.
+
+### Asynchronous email notifications
+
+The user service owns signup state and account creation. It does not send
+emails directly. It publishes OTP and welcome events to Kafka, while the
+notification service consumes those topics and uses the configured mail
+provider. This keeps email failures from being part of the account-creation
+database transaction.
 
 The current default is a five-minute OTP session and five code requests during
 an active one-hour rate-limit window. The sixth request was manually verified
