@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/constants"
 	kafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
@@ -227,6 +229,7 @@ func NewKafkaConsumer(brokers string,
 		// See https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md.
 		"enable.auto.commit":       true,
 		"enable.auto.offset.store": false,
+		"allow.auto.create.topics": true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create Kafka consumer: %w", err)
@@ -294,4 +297,48 @@ func (c *KafkaConsumer) Consume(
 // Close leaves the consumer group and releases its network resources.
 func (c *KafkaConsumer) Close() error {
 	return c.client.Close()
+}
+
+func EnsureTopics(ctx context.Context, brokers string) error {
+	admin, err := kafka.NewAdminClient(&kafka.ConfigMap{
+		"bootstrap.servers": brokers,
+	})
+	if err != nil {
+		return fmt.Errorf("create Kafka admin client: %w", err)
+	}
+	defer admin.Close()
+
+	specifications := make([]kafka.TopicSpecification, 0)
+
+	for _, topic := range constants.AllTopics() {
+		specifications = append(specifications, kafka.TopicSpecification{
+			Topic:             topic,
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		})
+	}
+
+	results, err := admin.CreateTopics(
+		ctx,
+		specifications,
+		kafka.SetAdminOperationTimeout(10*time.Second),
+	)
+	if err != nil {
+		return fmt.Errorf("create Kafka topics: %w", err)
+	}
+
+	for _, result := range results {
+		switch result.Error.Code() {
+		case kafka.ErrNoError, kafka.ErrTopicAlreadyExists:
+			continue
+		default:
+			return fmt.Errorf(
+				"create Kafka topic %q: %w",
+				result.Topic,
+				result.Error,
+			)
+		}
+	}
+
+	return nil
 }
