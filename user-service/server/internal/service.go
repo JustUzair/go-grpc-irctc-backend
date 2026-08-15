@@ -5,6 +5,7 @@ import (
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
 	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/interceptors"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	"github.com/redis/go-redis/v9"
@@ -17,6 +18,7 @@ type UserService struct {
 	userv1.UnimplementedUserServiceServer
 	DB          *gorm.DB
 	RedisClient *redis.Client
+	KafkaClient *utils.KafkaProducer
 	Config      env.Config
 }
 
@@ -50,6 +52,7 @@ func (this *UserService) SendOTP(ctx context.Context, req *userv1.SendOTPRequest
 		SendOTPInput{
 			Config:    this.Config,
 			Redis:     this.RedisClient,
+			Kafka:     this.KafkaClient,
 			DB:        this.DB,
 			Firstname: req.FirstName,
 			Lastname:  req.LastName,
@@ -80,6 +83,7 @@ func (this *UserService) VerifyOTP(ctx context.Context, req *userv1.VerifyOTPReq
 	new_user, err := handleVerifyOTP(ctx, VerifyOTPInput{
 		Config:       this.Config,
 		Redis:        this.RedisClient,
+		Kafka:        this.KafkaClient,
 		DB:           this.DB,
 		Otp:          otp,
 		OtpSessionId: otp_session_id,

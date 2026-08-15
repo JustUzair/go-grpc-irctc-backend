@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/JustUzair/go-grpc-irctc-backend/utils"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/redis/go-redis/v9"
@@ -10,6 +11,7 @@ import (
 type SendOTPInput struct {
 	Config    env.Config
 	Redis     *redis.Client
+	Kafka     *utils.KafkaProducer
 	DB        *gorm.DB
 	Firstname string
 	Lastname  string
@@ -20,6 +22,7 @@ type SendOTPInput struct {
 type VerifyOTPInput struct {
 	Config       env.Config
 	Redis        *redis.Client
+	Kafka        *utils.KafkaProducer
 	DB           *gorm.DB
 	Otp          string
 	OtpSessionId string

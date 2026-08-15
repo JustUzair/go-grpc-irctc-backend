@@ -4,21 +4,18 @@ import (
 	"context"
 	"errors"
 	"log"
-	"log/slog"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
-	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/interceptors"
-	service "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/internal"
-	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
-
+	notification_consumer "github.com/JustUzair/go-grpc-irctc-backend/notification-service/server/internal/kafka/consumer"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/constants"
 	env "github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	logger "github.com/JustUzair/go-grpc-irctc-backend/utils/interceptors"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -37,6 +34,15 @@ func main() {
 	)
 	defer stop()
 
+	// Notification-specific dependency.
+	mailService, err := mailer.New(config)
+	if err != nil {
+		log.Fatalln("Error initializing mailer for notification-service")
+	}
+
+	consumerCtx, cancelConsumer := context.WithCancel(runCtx)
+	defer cancelConsumer()
+
 	startupCtx, cancelStartup := context.WithTimeout(
 		runCtx,
 		10*time.Second,
@@ -50,73 +56,53 @@ func main() {
 		log.Fatalf("initialize Kafka topics: %v", err)
 	}
 
-	db, err := utils.NewGormClient(startupCtx, config.UserDatabaseURL, &utils.PostgresGorm{
-		MaxOpenConns: 10,
-		MaxIdleConns: 5,
+	consumer, err := utils.NewKafkaConsumer(config.KafkaBrokers, "notification-service", []string{
+		constants.TOPIC.OTP_EMAIL,
+		constants.TOPIC.WELCOME_EMAIL,
+		constants.TOPIC.BOOKING_EMAIL,
+		constants.TOPIC.PAYMENT_EMAIL,
 	})
-
 	if err != nil {
-		log.Fatalf("connect to user database: %v", err)
+		log.Fatalln("Error initializing kafka consumer for notification-service")
 	}
+	defer consumer.Close()
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		log.Fatalf("get user database pool: %v", err)
-	}
-	defer sqlDB.Close()
-
-	if err := db.WithContext(startupCtx).AutoMigrate(&models.User{}, &models.AuthProvider{}); err != nil {
-		log.Fatalf("auto-migrate user schema: %v", err)
-	}
-
-	redisClient, err := utils.NewRedisClient(startupCtx, config.RedisAddress, config.RedisPassword)
-	if err != nil {
-		log.Fatalf("cannot instantiate redis client: %v\n", err)
-	}
-	defer redisClient.Close()
-
-	kafkaClient, err := utils.NewKafkaProducer(config.KafkaBrokers, "user-service")
-	if err != nil {
-		log.Fatalf("cannot instantiate kafka client: %v\n", err)
-	}
-	defer func() {
-		if err := kafkaClient.Close(); err != nil {
-			slog.Error("close Kafka producer", "error", err)
-		}
-	}()
-	lis, err := net.Listen("tcp", ":"+config.UserServicePort)
+	lis, err := net.Listen("tcp", ":"+config.NotificationServicePort)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	defer lis.Close()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(logger.UnaryServerLoggerInterceptor, interceptors.MetaInterceptor))
-	userService := &service.UserService{
-		DB:          db,
-		RedisClient: redisClient,
-		KafkaClient: kafkaClient,
-		Config:      config,
-	}
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(logger.UnaryServerLoggerInterceptor))
 
 	healthServer := health.NewServer()
-
 	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-	healthServer.SetServingStatus(userv1.UserService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
-
-	userv1.RegisterUserServiceServer(grpcServer, userService)
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 
-	log.Printf("user service started on port %s", config.UserServicePort)
+	log.Printf("notification service started on port %s", config.NotificationServicePort)
 
+	consumerDone := make(chan error, 1)
+	go func() {
+		consumerDone <- consumer.Consume(
+			consumerCtx, notification_consumer.ConsumeNotification(mailService),
+		)
+	}()
 	serveErr := make(chan error, 1)
 	go func() {
 		serveErr <- grpcServer.Serve(lis)
 	}()
 
 	select {
+	case err := <-consumerDone:
+		if err != nil && !errors.Is(err, context.Canceled) {
+			log.Printf("notification consumer stopped: %v", err)
+		}
+		cancelConsumer()
+		grpcServer.Stop()
 	case err := <-serveErr:
 		if err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 			log.Printf("gRPC server stopped unexpectedly: %v", err)
 		}
+		cancelConsumer()
 	case <-runCtx.Done():
 		log.Printf("shutdown signal received")
 
@@ -125,10 +111,7 @@ func main() {
 			"",
 			healthpb.HealthCheckResponse_NOT_SERVING,
 		)
-		healthServer.SetServingStatus(
-			userv1.UserService_ServiceDesc.ServiceName,
-			healthpb.HealthCheckResponse_NOT_SERVING,
-		)
+
 		gracefulShutdown := make(chan struct{})
 		go func() {
 			grpcServer.GracefulStop()

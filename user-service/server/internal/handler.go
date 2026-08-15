@@ -8,9 +8,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/JustUzair/go-grpc-irctc-backend/user-service/server/internal/kafka/producer"
 	models "github.com/JustUzair/go-grpc-irctc-backend/user-service/server/models"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
-	"github.com/JustUzair/go-grpc-irctc-backend/utils/mailer"
 	"golang.org/x/crypto/bcrypt"
 	idtoken "google.golang.org/api/idtoken"
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,7 @@ func handleSendOTP(ctx context.Context, input SendOTPInput) (string, error) {
 	defer cancel()
 
 	db := input.DB
+	kafkaEventProducer := input.Kafka
 	redis := input.Redis
 	config := input.Config
 	firstname := input.Firstname
@@ -58,23 +60,25 @@ func handleSendOTP(ctx context.Context, input SendOTPInput) (string, error) {
 
 			otpTTL := time.Duration(config.OTPTTL) * time.Second
 			expiresInMinutes := int((otpTTL + time.Minute - 1) / time.Minute)
+			name := firstname + " " + lastname
+			if err = producer.SendOtpEmail(ctx, kafkaEventProducer, meta.Email, name, string(otp), expiresInMinutes); err != nil {
+				if errors.Is(err, utils.ErrDeliveryUnknown) {
+					// Kafka may still deliver the event. Keep the OTP
+					// until its normal Redis TTL expires.
+					log.Printf("OTP notification delivery outcome unknown: %v", err)
+					return "", status.Error(
+						codes.Unavailable,
+						"OTP delivery is still being processed",
+					)
+				}
+				if deleteErr := RemoveStoredOTP(ctx, redis, otpSessionId); deleteErr != nil {
+					log.Printf("failed to remove OTP after publish failure: %v", deleteErr)
+				}
 
-			mailingService, err := mailer.New(config)
-			if err != nil {
-				return "", err
-			}
-			_, err = mailingService.SendEmail(ctx, mailer.EmailTemplate(mailer.SendOTP), mailer.EmailParams{
-				ToEmailAddress: meta.Email,
-				TemplateData: mailer.SendOTPTemplateData{
-					Name:             firstname + " " + lastname,
-					OTP:              string(otp),
-					ExpiresInMinutes: expiresInMinutes,
-				},
-			})
-
-			if err != nil {
-				RemoveStoredOTP(ctx, redis, otpSessionId)
-				return "", err
+				return "", status.Error(
+					codes.Unavailable,
+					"could not queue OTP email",
+				)
 			}
 
 			return otpSessionId, nil
@@ -98,6 +102,7 @@ func handleVerifyOTP(ctx context.Context, input VerifyOTPInput) (*models.User, e
 	redis := input.Redis
 	config := input.Config
 	otp := input.Otp
+	kafkaEventProducer := input.Kafka
 	otp_session_id := input.OtpSessionId
 
 	// -------------------------------------------------------------
@@ -122,16 +127,16 @@ func handleVerifyOTP(ctx context.Context, input VerifyOTPInput) (*models.User, e
 		return nil, fmt.Errorf("error creating user record in db")
 	}
 
-	mailingService, err := mailer.New(config)
-	if err != nil {
-		return nil, err
+	if err := producer.VerifyOtpEmail(ctx, kafkaEventProducer, meta.Email, meta.FirstName, meta.LastName); err != nil {
+		// The user was already created successfully. Do not make the
+		// client retry account creation because email delivery failed.
+		log.Printf(
+			"welcome email event failed for user %s: %v",
+			new_user.ID,
+			err,
+		)
 	}
-	_, err = mailingService.SendEmail(ctx, mailer.EmailTemplate(mailer.VerifyOTP), mailer.EmailParams{
-		ToEmailAddress: meta.Email,
-		TemplateData: mailer.VerifyOTPTemplateData{
-			Name: meta.FirstName + " " + meta.LastName,
-		},
-	})
+
 	return &new_user, nil
 
 }
