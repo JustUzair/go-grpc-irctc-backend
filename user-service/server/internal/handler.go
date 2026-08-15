@@ -13,12 +13,51 @@ import (
 	"github.com/JustUzair/go-grpc-irctc-backend/utils"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/auth"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 	idtoken "google.golang.org/api/idtoken"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
+
+func handleGetUser(ctx context.Context, input GetUserInput) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	userKey := GetUserKey(input.UserID)
+	cachedUser, err := input.Redis.Get(ctx, userKey).Result()
+	if err == nil {
+		var user models.User
+		if err := json.Unmarshal([]byte(cachedUser), &user); err == nil {
+			return &user, nil
+		}
+
+		log.Printf("invalid cached user payload for %s; falling back to database", input.UserID)
+	} else if !errors.Is(err, redis.Nil) {
+		log.Printf("user cache lookup failed for %s; falling back to database: %v", input.UserID, err)
+	}
+
+	var user models.User
+	if err := input.DB.WithContext(ctx).First(&user, "id = ?", input.UserID).Error; err != nil {
+		return nil, err
+	}
+
+	if payload, err := json.Marshal(&user); err == nil {
+		if err := input.Redis.Set(
+			ctx,
+			userKey,
+			payload,
+			time.Duration(input.Config.RedisUserTTL)*time.Second,
+		).Err(); err != nil {
+			log.Printf("failed to refresh user cache for %s: %v", input.UserID, err)
+		}
+	} else {
+		log.Printf("failed to marshal user %s for cache: %v", input.UserID, err)
+	}
+
+	return &user, nil
+}
 
 func handleSendOTP(ctx context.Context, input SendOTPInput) (string, error) {
 

@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils"
+	"github.com/JustUzair/go-grpc-irctc-backend/utils/auth"
 	"github.com/JustUzair/go-grpc-irctc-backend/utils/env"
 	custom_errors "github.com/JustUzair/go-grpc-irctc-backend/utils/errors"
 	custom_interceptors "github.com/JustUzair/go-grpc-irctc-backend/utils/interceptors"
@@ -21,12 +23,6 @@ type UserService struct {
 	RedisClient *redis.Client
 	KafkaClient *utils.KafkaProducer
 	Config      env.Config
-}
-
-func (*UserService) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
-	return &userv1.GetUserResponse{
-		User: &userv1.User{},
-	}, nil
 }
 
 func (this *UserService) SendOTP(ctx context.Context, req *userv1.SendOTPRequest) (*userv1.SendOTPResponse, error) {
@@ -209,5 +205,38 @@ func (this *UserService) VerifyGoogleIDToken(ctx context.Context, req *userv1.Ve
 		},
 		AccessTokenExpiresIn:  int64(this.Config.AccessTokenExp),
 		RefreshTokenExpiresIn: int64(this.Config.RefreshTokenExp),
+	}, nil
+}
+
+func (this *UserService) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+	userID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(
+			codes.Unauthenticated,
+			"missing authenticated user",
+		)
+	}
+
+	user, err := handleGetUser(ctx, GetUserInput{
+		Config: this.Config,
+		DB:     this.DB,
+		Redis:  this.RedisClient,
+		UserID: userID,
+	})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+
+		return nil, status.Error(codes.Internal, "failed to load user")
+	}
+
+	return &userv1.GetUserResponse{
+		User: &userv1.User{
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+		},
 	}, nil
 }
