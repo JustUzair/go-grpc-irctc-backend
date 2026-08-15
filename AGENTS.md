@@ -69,6 +69,12 @@ real credentials in `.env.local` or `.env`, never in tracked files.
   process started solely for a test.
 - Do not commit, push, amend, rebase, or rewrite history unless explicitly
   requested. When requested, use focused commits and verify the staged diff.
+- When a feature spans setup, shared infrastructure, and service behavior,
+  stage and commit it in dependency order: configuration/setup first, shared
+  clients and contracts next, reusable helpers after that, service wiring and
+  runtime initialization next, and documentation/tests last. Keep tightly
+  coupled producer and consumer changes in the same feature commit when they
+  complete one end-to-end flow.
 
 ## Go conventions
 

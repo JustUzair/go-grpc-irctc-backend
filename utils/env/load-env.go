@@ -11,65 +11,67 @@ import (
 )
 
 const (
-	userServicePortKey    = "USER_SERVICE_PORT"
-	bookingServicePortKey = "BOOKING_SERVICE_PORT"
-	paymentServicePortKey = "PAYMENT_SERVICE_PORT"
-	searchServicePortKey  = "SEARCH_SERVICE_PORT"
-	redisAddressKey       = "REDIS_ADDRESS"
-	redisPasswordKey      = "REDIS_PASSWORD"
-	userDatabaseURLKey    = "USER_DATABASE_URL"
-	bookingDatabaseURLKey = "BOOKING_DATABASE_URL"
-	paymentDatabaseURLKey = "PAYMENT_DATABASE_URL"
-	testDatabaseURLKey    = "TEST_DATABASE_URL"
-	mailerProviderKey     = "MAILER_PROVIDER"
-	resendAPIKey          = "RESEND_API_KEY"
-	mailtrapAPITokenKey   = "MAILTRAP_API_TOKEN"
-	mailtrapInboxIDKey    = "MAILTRAP_INBOX_ID"
-	emailFromName         = "EMAIL_FROM_NAME"
-	emailFromAddress      = "EMAIL_FROM_ADDRESS"
-	otpTTL                = "OTP_TTL"
-	otpRateMaxPerHour     = "OTP_RATE_MAX_PER_HOUR"
-	otpMaxVerifyAttempts  = "OTP_MAX_VERIFY_ATTEMPTS"
-	otpHmacSecret         = "OTP_HMAC_SECRET"
-	jwtAccessSecretKey    = "JWT_ACCESS_SECRET_KEY"
-	jwtRefreshSecretKey   = "JWT_REFRESH_SECRET_KEY"
-	accessTokenExp        = "ACCESS_TOKEN_EXP"
-	refreshTokenExp       = "REFRESH_TOKEN_EXP"
-	redisUserTTL          = "REDIS_USER_TTL"
-	googleClientId        = "GOOGLE_CLIENT_ID"
-	googleClientSecret    = "GOOGLE_CLIENT_SECRET"
-	kafkaBrokers          = "KAFKA_BROKERS"
+	userServicePortKey         = "USER_SERVICE_PORT"
+	bookingServicePortKey      = "BOOKING_SERVICE_PORT"
+	paymentServicePortKey      = "PAYMENT_SERVICE_PORT"
+	searchServicePortKey       = "SEARCH_SERVICE_PORT"
+	notificationServicePortKey = "NOTIFICATION_SERVICE_PORT"
+	redisAddressKey            = "REDIS_ADDRESS"
+	redisPasswordKey           = "REDIS_PASSWORD"
+	userDatabaseURLKey         = "USER_DATABASE_URL"
+	bookingDatabaseURLKey      = "BOOKING_DATABASE_URL"
+	paymentDatabaseURLKey      = "PAYMENT_DATABASE_URL"
+	testDatabaseURLKey         = "TEST_DATABASE_URL"
+	mailerProviderKey          = "MAILER_PROVIDER"
+	resendAPIKey               = "RESEND_API_KEY"
+	mailtrapAPITokenKey        = "MAILTRAP_API_TOKEN"
+	mailtrapInboxIDKey         = "MAILTRAP_INBOX_ID"
+	emailFromName              = "EMAIL_FROM_NAME"
+	emailFromAddress           = "EMAIL_FROM_ADDRESS"
+	otpTTL                     = "OTP_TTL"
+	otpRateMaxPerHour          = "OTP_RATE_MAX_PER_HOUR"
+	otpMaxVerifyAttempts       = "OTP_MAX_VERIFY_ATTEMPTS"
+	otpHmacSecret              = "OTP_HMAC_SECRET"
+	jwtAccessSecretKey         = "JWT_ACCESS_SECRET_KEY"
+	jwtRefreshSecretKey        = "JWT_REFRESH_SECRET_KEY"
+	accessTokenExp             = "ACCESS_TOKEN_EXP"
+	refreshTokenExp            = "REFRESH_TOKEN_EXP"
+	redisUserTTL               = "REDIS_USER_TTL"
+	googleClientId             = "GOOGLE_CLIENT_ID"
+	googleClientSecret         = "GOOGLE_CLIENT_SECRET"
+	kafkaBrokers               = "KAFKA_BROKERS"
 )
 
 type Config struct {
-	UserServicePort      string
-	BookingServicePort   string
-	PaymentServicePort   string
-	SearchServicePort    string
-	RedisAddress         string
-	RedisPassword        string
-	UserDatabaseURL      string
-	BookingDatabaseURL   string
-	PaymentDatabaseURL   string
-	TestDatabaseURL      string
-	MailerProvider       string
-	ResendAPIKey         string
-	MailtrapAPIToken     string
-	MailtrapInboxID      string
-	EmailFromName        string
-	EmailFromAddress     string
-	OTPTTL               int
-	OtpRateMaxPerHour    int
-	OtpMaxVerifyAttempts int
-	OtpHmacSecret        string
-	JWTAccessSecretKey   string
-	JWTRefreshSecretKey  string
-	AccessTokenExp       int
-	RefreshTokenExp      int
-	RedisUserTTL         int
-	GoogleClientID       string
-	GoogleClientSecret   string
-	KafkaBrokers         string
+	UserServicePort         string
+	BookingServicePort      string
+	PaymentServicePort      string
+	SearchServicePort       string
+	NotificationServicePort string
+	RedisAddress            string
+	RedisPassword           string
+	UserDatabaseURL         string
+	BookingDatabaseURL      string
+	PaymentDatabaseURL      string
+	TestDatabaseURL         string
+	MailerProvider          string
+	ResendAPIKey            string
+	MailtrapAPIToken        string
+	MailtrapInboxID         string
+	EmailFromName           string
+	EmailFromAddress        string
+	OTPTTL                  int
+	OtpRateMaxPerHour       int
+	OtpMaxVerifyAttempts    int
+	OtpHmacSecret           string
+	JWTAccessSecretKey      string
+	JWTRefreshSecretKey     string
+	AccessTokenExp          int
+	RefreshTokenExp         int
+	RedisUserTTL            int
+	GoogleClientID          string
+	GoogleClientSecret      string
+	KafkaBrokers            string
 }
 
 func Load() (Config, error) {
@@ -78,34 +80,35 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		UserServicePort:      os.Getenv(userServicePortKey),
-		BookingServicePort:   os.Getenv(bookingServicePortKey),
-		PaymentServicePort:   os.Getenv(paymentServicePortKey),
-		SearchServicePort:    os.Getenv(searchServicePortKey),
-		RedisAddress:         os.Getenv(redisAddressKey),
-		RedisPassword:        os.Getenv(redisPasswordKey),
-		UserDatabaseURL:      os.Getenv(userDatabaseURLKey),
-		BookingDatabaseURL:   os.Getenv(bookingDatabaseURLKey),
-		PaymentDatabaseURL:   os.Getenv(paymentDatabaseURLKey),
-		TestDatabaseURL:      os.Getenv(testDatabaseURLKey),
-		MailerProvider:       os.Getenv(mailerProviderKey),
-		ResendAPIKey:         os.Getenv(resendAPIKey),
-		MailtrapAPIToken:     firstNonEmpty(os.Getenv(mailtrapAPITokenKey), os.Getenv("MAILTRAP_TOKEN")),
-		MailtrapInboxID:      os.Getenv(mailtrapInboxIDKey),
-		EmailFromName:        os.Getenv(emailFromName),
-		EmailFromAddress:     os.Getenv(emailFromAddress),
-		OTPTTL:               getEnvInt(otpTTL, 300),
-		OtpRateMaxPerHour:    getEnvInt(otpRateMaxPerHour, 5),
-		OtpMaxVerifyAttempts: getEnvInt(otpMaxVerifyAttempts, 5),
-		OtpHmacSecret:        os.Getenv(otpHmacSecret),
-		JWTAccessSecretKey:   os.Getenv(jwtAccessSecretKey),
-		JWTRefreshSecretKey:  os.Getenv(jwtRefreshSecretKey),
-		AccessTokenExp:       getEnvInt(accessTokenExp, 900),
-		RefreshTokenExp:      getEnvInt(refreshTokenExp, 2628000),
-		RedisUserTTL:         getEnvInt(redisUserTTL, 86400),
-		GoogleClientID:       os.Getenv(googleClientId),
-		GoogleClientSecret:   os.Getenv(googleClientSecret),
-		KafkaBrokers:         os.Getenv(kafkaBrokers),
+		UserServicePort:         os.Getenv(userServicePortKey),
+		BookingServicePort:      os.Getenv(bookingServicePortKey),
+		PaymentServicePort:      os.Getenv(paymentServicePortKey),
+		SearchServicePort:       os.Getenv(searchServicePortKey),
+		NotificationServicePort: os.Getenv(notificationServicePortKey),
+		RedisAddress:            os.Getenv(redisAddressKey),
+		RedisPassword:           os.Getenv(redisPasswordKey),
+		UserDatabaseURL:         os.Getenv(userDatabaseURLKey),
+		BookingDatabaseURL:      os.Getenv(bookingDatabaseURLKey),
+		PaymentDatabaseURL:      os.Getenv(paymentDatabaseURLKey),
+		TestDatabaseURL:         os.Getenv(testDatabaseURLKey),
+		MailerProvider:          os.Getenv(mailerProviderKey),
+		ResendAPIKey:            os.Getenv(resendAPIKey),
+		MailtrapAPIToken:        firstNonEmpty(os.Getenv(mailtrapAPITokenKey), os.Getenv("MAILTRAP_TOKEN")),
+		MailtrapInboxID:         os.Getenv(mailtrapInboxIDKey),
+		EmailFromName:           os.Getenv(emailFromName),
+		EmailFromAddress:        os.Getenv(emailFromAddress),
+		OTPTTL:                  getEnvInt(otpTTL, 300),
+		OtpRateMaxPerHour:       getEnvInt(otpRateMaxPerHour, 5),
+		OtpMaxVerifyAttempts:    getEnvInt(otpMaxVerifyAttempts, 5),
+		OtpHmacSecret:           os.Getenv(otpHmacSecret),
+		JWTAccessSecretKey:      os.Getenv(jwtAccessSecretKey),
+		JWTRefreshSecretKey:     os.Getenv(jwtRefreshSecretKey),
+		AccessTokenExp:          getEnvInt(accessTokenExp, 900),
+		RefreshTokenExp:         getEnvInt(refreshTokenExp, 2628000),
+		RedisUserTTL:            getEnvInt(redisUserTTL, 86400),
+		GoogleClientID:          os.Getenv(googleClientId),
+		GoogleClientSecret:      os.Getenv(googleClientSecret),
+		KafkaBrokers:            os.Getenv(kafkaBrokers),
 	}, nil
 }
 

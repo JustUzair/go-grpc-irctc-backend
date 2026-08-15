@@ -1,10 +1,11 @@
 {
   "scripts": {
-    "start-services": "npm run start-user-service & npm run start-booking-service & npm run start-payment-service & npm run start-search-service & wait",
+    "start-services": "pnpm start-user-service & pnpm start-booking-service & pnpm start-payment-service & pnpm start-search-service & pnpm start-notification-service & wait",
     "start-user-service": "go run ./user-service/server",
     "start-booking-service": "go run ./booking-service/server",
     "start-payment-service": "go run ./payment-service/server",
     "start-search-service": "go run ./search-service/server",
+    "start-notification-service": "go run ./notification-service/server",
     "test:google-oauth": "go run ./scripts/google-oauth-test",
     "tests:integration": "go test -tags=integration ./tests -v -count=1",
     "tests:kafka": "go test -tags=integration ./tests -run '^TestKafkaProducerConsumerIntegration$' -v -count=1",
