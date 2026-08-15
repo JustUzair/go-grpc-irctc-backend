@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"log/slog"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	userv1 "github.com/JustUzair/go-grpc-irctc-backend/gen/go/user/v1"
@@ -25,10 +30,20 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	runCtx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
-	db, err := utils.NewGormClient(ctx, config.UserDatabaseURL, &utils.PostgresGorm{
+	startupCtx, cancelStartup := context.WithTimeout(
+		runCtx,
+		10*time.Second,
+	)
+	defer cancelStartup()
+
+	db, err := utils.NewGormClient(startupCtx, config.UserDatabaseURL, &utils.PostgresGorm{
 		MaxOpenConns: 10,
 		MaxIdleConns: 5,
 	})
@@ -43,23 +58,35 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	if err := db.AutoMigrate(&models.User{}, &models.AuthProvider{}); err != nil {
+	if err := db.WithContext(startupCtx).AutoMigrate(&models.User{}, &models.AuthProvider{}); err != nil {
 		log.Fatalf("auto-migrate user schema: %v", err)
 	}
 
-	redisClient, err := utils.NewRedisClient(ctx, config.RedisAddress, config.RedisPassword)
+	redisClient, err := utils.NewRedisClient(startupCtx, config.RedisAddress, config.RedisPassword)
 	if err != nil {
-		log.Fatalf("cannot instantiate redis client")
+		log.Fatalf("cannot instantiate redis client: %v\n", err)
 	}
+	defer redisClient.Close()
 
+	kafkaClient, err := utils.NewKafkaProducer(config.KafkaBrokers, "user-service")
+	if err != nil {
+		log.Fatalf("cannot instantiate kafka client: %v\n", err)
+	}
+	defer func() {
+		if err := kafkaClient.Close(); err != nil {
+			slog.Error("close Kafka producer", "error", err)
+		}
+	}()
 	lis, err := net.Listen("tcp", ":"+config.UserServicePort)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
+	defer lis.Close()
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(logger.UnaryServerLoggerInterceptor, interceptors.MetaInterceptor))
 	userService := &service.UserService{
 		DB:          db,
 		RedisClient: redisClient,
+		KafkaClient: kafkaClient,
 		Config:      config,
 	}
 
@@ -72,7 +99,49 @@ func main() {
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
 
 	log.Printf("user service started on port %s", config.UserServicePort)
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Error occurred on gRPC server startup: %v", err)
+
+	serveErr := make(chan error, 1)
+	go func() {
+		serveErr <- grpcServer.Serve(lis)
+	}()
+
+	select {
+	case err := <-serveErr:
+		if err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			log.Printf("gRPC server stopped unexpectedly: %v", err)
+		}
+	case <-runCtx.Done():
+		log.Printf("shutdown signal received")
+
+		// Set health service status to not serving
+		healthServer.SetServingStatus(
+			"",
+			healthpb.HealthCheckResponse_NOT_SERVING,
+		)
+		healthServer.SetServingStatus(
+			userv1.UserService_ServiceDesc.ServiceName,
+			healthpb.HealthCheckResponse_NOT_SERVING,
+		)
+		gracefulShutdown := make(chan struct{})
+		go func() {
+			grpcServer.GracefulStop()
+			close(gracefulShutdown)
+		}()
+
+		shutdownCtx, cancelShutdown := context.WithTimeout(
+			context.Background(),
+			10*time.Second,
+		)
+		defer cancelShutdown()
+
+		select {
+		case <-gracefulShutdown:
+			log.Printf("gRPC server stopped gracefully")
+		case <-shutdownCtx.Done():
+			log.Printf("graceful shutdown timed out; forcing stop")
+			grpcServer.Stop()
+
+		}
+
 	}
 }
