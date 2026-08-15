@@ -38,6 +38,7 @@ const (
 	redisUserTTL          = "REDIS_USER_TTL"
 	googleClientId        = "GOOGLE_CLIENT_ID"
 	googleClientSecret    = "GOOGLE_CLIENT_SECRET"
+	kafkaBrokers          = "KAFKA_BROKERS"
 )
 
 type Config struct {
@@ -68,6 +69,7 @@ type Config struct {
 	RedisUserTTL         int
 	GoogleClientID       string
 	GoogleClientSecret   string
+	KafkaBrokers         string
 }
 
 func Load() (Config, error) {
@@ -103,6 +105,7 @@ func Load() (Config, error) {
 		RedisUserTTL:         getEnvInt(redisUserTTL, 86400),
 		GoogleClientID:       os.Getenv(googleClientId),
 		GoogleClientSecret:   os.Getenv(googleClientSecret),
+		KafkaBrokers:         os.Getenv(kafkaBrokers),
 	}, nil
 }
 
